@@ -10,6 +10,7 @@
     </PackageVersion>
     <PackageVersion Include="FluentAssertions" Version="7.0.0-alpha.4" />
     <PackageVersion Include="Microsoft.NET.Test.Sdk" Version="17.11.0" />
+    <PackageVersion Include="NSubstitute" Version="5.1.0" />
     <PackageVersion Include="SourceKit.Analyzers.Collections" Version="1.0.34" />
     <PackageVersion Include="SourceKit.Analyzers.Enumerable" Version="1.0.34" />
     <PackageVersion Include="SourceKit.Analyzers.MemberAccessibility" Version="1.0.31" />
