@@ -14,22 +14,21 @@ public class RequestClient : IRequestClient, ILibraryOperationHandler
         _libraryOperationService = libraryOperationService;
     }
 
-    public Task<ResponseModel> SendAsync(RequestModel request, CancellationToken cancellationToken)
+    public async Task<ResponseModel> SendAsync(RequestModel request, CancellationToken cancellationToken)
     {
         var requestId = Guid.NewGuid();
         var taskCompletionSource = new TaskCompletionSource<ResponseModel>(TaskCreationOptions.RunContinuationsAsynchronously);
 
         if (cancellationToken.IsCancellationRequested)
         {
-            taskCompletionSource.SetCanceled();
-            return taskCompletionSource.Task;
+            return await Task.FromCanceled<ResponseModel>(cancellationToken).ConfigureAwait(false);
         }
 
         cancellationToken.Register(() =>
         {
             if (_tasks.TryRemove(requestId, out TaskCompletionSource<ResponseModel>? source))
             {
-                source.TrySetCanceled();
+                source.SetCanceled(cancellationToken);
             }
         });
 
@@ -38,24 +37,18 @@ public class RequestClient : IRequestClient, ILibraryOperationHandler
             throw new InvalidOperationException("Task could not be added");
         }
 
-        try
-        {
-            _libraryOperationService.BeginOperation(requestId, request, cancellationToken);
-        }
-        catch (Exception ex)
-        {
-            _tasks.TryRemove(requestId, out _);
-            taskCompletionSource.TrySetException(ex);
-        }
+        await Task.Run(() => _libraryOperationService
+                .BeginOperation(requestId, request, cancellationToken))
+                .ConfigureAwait(false);
 
-        return taskCompletionSource.Task;
+        return await taskCompletionSource.Task.ConfigureAwait(false);
     }
 
     public void HandleOperationResult(Guid requestId, byte[] data)
     {
         if (_tasks.TryRemove(requestId, out TaskCompletionSource<ResponseModel>? source))
         {
-            source.TrySetResult(new ResponseModel(data));
+            source.SetResult(new ResponseModel(data));
         }
     }
 
@@ -63,7 +56,7 @@ public class RequestClient : IRequestClient, ILibraryOperationHandler
     {
         if (_tasks.TryRemove(requestId, out TaskCompletionSource<ResponseModel>? source))
         {
-            source.TrySetException(ex);
+            source.SetException(ex);
         }
     }
 }

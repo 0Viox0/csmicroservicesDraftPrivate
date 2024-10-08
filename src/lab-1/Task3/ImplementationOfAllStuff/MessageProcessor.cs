@@ -1,3 +1,4 @@
+using Itmo.Dev.Platform.Common.Extensions;
 using System.Threading.Channels;
 using Task3.TaskModel;
 
@@ -8,14 +9,16 @@ public class MessageProcessor : IMessageSender, IMessageProcessor
     private readonly Channel<Message> _channel;
     private readonly IMessageHandler _handler;
     private readonly int _batchSize;
-    private bool _isCompleted = false;
+    private readonly TimeSpan _bachTimeout;
 
     public MessageProcessor(
         IMessageHandler handler,
-        int batchSize)
+        int batchSize,
+        TimeSpan bachTimeout)
     {
         _handler = handler;
         _batchSize = batchSize;
+        _bachTimeout = bachTimeout;
 
         _channel = Channel.CreateBounded<Message>(new BoundedChannelOptions(100)
         {
@@ -32,28 +35,17 @@ public class MessageProcessor : IMessageSender, IMessageProcessor
 
     public async Task ProcessAsync(CancellationToken cancellationToken)
     {
-        var currentMessages = new List<Message>();
-
-        while (!_isCompleted || _channel.Reader.Count > 0)
+        await foreach (IReadOnlyList<Message>? batch in _channel.Reader.ReadAllAsync(cancellationToken)
+                           .ChunkAsync(_batchSize, _bachTimeout).WithCancellation(cancellationToken))
         {
-            while (await _channel.Reader.WaitToReadAsync(cancellationToken).ConfigureAwait(false))
-            {
-                while (currentMessages.Count < _batchSize && _channel.Reader.TryRead(out Message? message))
-                {
-                    currentMessages.Add(message);
-                }
+            if (batch.Count == 0) continue;
 
-                if (currentMessages.Count == 0) continue;
-
-                await _handler.HandleAsync(currentMessages, cancellationToken).ConfigureAwait(false);
-                currentMessages.Clear();
-            }
+            await _handler.HandleAsync(batch.ToList(), cancellationToken).ConfigureAwait(false);
         }
     }
 
     public void Complete()
     {
-        _isCompleted = true;
         _channel.Writer.Complete();
     }
 }

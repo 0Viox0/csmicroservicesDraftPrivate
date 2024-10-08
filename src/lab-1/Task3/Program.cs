@@ -8,7 +8,7 @@ public static class Program
     public static async void Main()
     {
         var handler = new ConsoleMessageHandler();
-        var processor = new MessageProcessor(handler, batchSize: 5);
+        var processor = new MessageProcessor(handler, batchSize: 5, TimeSpan.FromMinutes(30));
 
         MessageProcessor sender = processor;
         MessageProcessor messageProcessor = processor;
