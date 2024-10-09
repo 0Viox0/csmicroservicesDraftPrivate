@@ -10,8 +10,11 @@
     </PackageVersion>
     <PackageVersion Include="FluentAssertions" Version="7.0.0-alpha.4" />
     <PackageVersion Include="Itmo.Dev.Platform.Common" Version="1.1.112" />
+    <PackageVersion Include="Microsoft.Extensions.Http" Version="9.0.0-rc.2.24473.5" />
     <PackageVersion Include="Microsoft.NET.Test.Sdk" Version="17.11.0" />
     <PackageVersion Include="NSubstitute" Version="5.1.0" />
+    <PackageVersion Include="Refit" Version="7.2.1" />
+    <PackageVersion Include="Refit.HttpClientFactory" Version="7.2.1" />
     <PackageVersion Include="SourceKit.Analyzers.Collections" Version="1.0.34" />
     <PackageVersion Include="SourceKit.Analyzers.Enumerable" Version="1.0.34" />
     <PackageVersion Include="SourceKit.Analyzers.MemberAccessibility" Version="1.0.31" />
