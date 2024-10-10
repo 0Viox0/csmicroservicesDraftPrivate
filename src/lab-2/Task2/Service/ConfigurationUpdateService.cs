@@ -9,7 +9,6 @@ public class ConfigurationUpdateService : IDisposable
     private readonly CustomConfigurationProvider _customConfigurationProvider;
     private readonly IConfigurationClient _configurationClient;
     private readonly PeriodicTimer _periodicTimer;
-    private readonly TimeSpan _periodicTimeInterval;
 
     public void Dispose()
     {
@@ -23,8 +22,7 @@ public class ConfigurationUpdateService : IDisposable
     {
         _customConfigurationProvider = customConfigurationProvider;
         _configurationClient = configurationClient;
-        _periodicTimeInterval = periodicTimeInterval;
-        _periodicTimer = new PeriodicTimer(_periodicTimeInterval);
+        _periodicTimer = new PeriodicTimer(periodicTimeInterval);
     }
 
     public async Task StartUpdateConfigurationServiceAsync(
@@ -32,7 +30,7 @@ public class ConfigurationUpdateService : IDisposable
         string pageToken,
         CancellationToken cancellationToken)
     {
-        while (await _periodicTimer.WaitForNextTickAsync().ConfigureAwait(false))
+        while (await _periodicTimer.WaitForNextTickAsync(cancellationToken).ConfigureAwait(false))
         {
             await UpdateConfiguration(pageSize, pageToken, cancellationToken).ConfigureAwait(false);
         }
@@ -40,10 +38,10 @@ public class ConfigurationUpdateService : IDisposable
 
     private async Task UpdateConfiguration(int pageSize, string pageToken, CancellationToken cancellationToken)
     {
-        QueryConfigurationsResponse respose = await _configurationClient
+        QueryConfigurationsResponse response = await _configurationClient
             .GetConfigurationsAsync(pageSize, pageToken, cancellationToken)
             .ConfigureAwait(false);
 
-        _customConfigurationProvider.UpdateConfiguration(respose.Items);
+        _customConfigurationProvider.UpdateConfiguration(response.Items);
     }
 }

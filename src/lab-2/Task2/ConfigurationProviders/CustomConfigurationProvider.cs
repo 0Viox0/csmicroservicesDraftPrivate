@@ -7,11 +7,40 @@ public class CustomConfigurationProvider : ConfigurationProvider
 {
     public void UpdateConfiguration(IEnumerable<ConfigurationItemDto> items)
     {
-        foreach (ConfigurationItemDto keyValuePair in items)
+        var itemList = items.ToList();
+        bool configurationChanged = false;
+
+        if (itemList.Count == 0)
         {
-            Data[keyValuePair.Key] = keyValuePair.Value;
+            if (Data.Count > 0)
+            {
+                Data.Clear();
+                configurationChanged = true;
+            }
+        }
+        else
+        {
+            foreach (ConfigurationItemDto keyValuePair in itemList)
+            {
+                if (!Data.TryGetValue(keyValuePair.Key, out string? existingValue)
+                    || existingValue != keyValuePair.Value)
+                {
+                    Data[keyValuePair.Key] = keyValuePair.Value;
+                    configurationChanged = true;
+                }
+            }
+
+            var keysToRemove = Data.Keys.Except(itemList.Select(item => item.Key)).ToList();
+            foreach (string? key in keysToRemove)
+            {
+                Data.Remove(key);
+                configurationChanged = true;
+            }
         }
 
-        OnReload();
+        if (configurationChanged)
+        {
+            OnReload();
+        }
     }
 }
