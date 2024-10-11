@@ -3,6 +3,7 @@ using Microsoft.Extensions.DependencyInjection;
 using Npgsql;
 using Task3.Dal.Migrations;
 using Task3.Dal.Models;
+using Task3.Dal.Models.Enums;
 using Task3.Dal.Repositories;
 using Task3.Dal.RepositoryExtensions;
 
@@ -22,35 +23,63 @@ ServiceProvider serviceProvider = new ServiceCollection()
     // .AddLogging(lb => lb.AddFluentMigratorConsole())
     .BuildServiceProvider();
 
-// Perform migration
 using IServiceScope scope = serviceProvider.CreateScope();
 IMigrationRunner runner = scope.ServiceProvider.GetRequiredService<IMigrationRunner>();
 runner.MigrateUp();
 
-// Retrieve the ProductRepository from the DI container
-ProductRepository productRepository = serviceProvider.GetRequiredService<ProductRepository>();
+//-------------------------------- product tests --------------------------------//
+// ProductRepository productRepository = serviceProvider.GetRequiredService<ProductRepository>();
+//
+// CancellationToken cancellationToken = CancellationToken.None;
+//
+// // Testing creation of the product
+// Console.WriteLine("Creating product...");
+// await productRepository.CreateProduct("Sample Product", 19.99m, cancellationToken).ConfigureAwait(false);
+// Console.WriteLine("Product created.");
+//
+// // Testing searching of the product
+// Console.WriteLine("Searching for products...");
+// IEnumerable<Product> products = await productRepository.SearchProduct(
+//     pageIndex: 0,
+//     pageSize: 10,
+//     nameSubstring: "Sample",
+//     maxPrice: null,
+//     minPrice: null,
+//     cancellationToken: cancellationToken).ConfigureAwait(false);
+//
+// // Display the result
+// Console.WriteLine("Products found:");
+// foreach (Product product in products)
+// {
+//     Console.WriteLine($"Product ID: {product.Id}, Name: {product.Name}, Price: {product.Price}");
+// }
 
-// Define a cancellation token
+//-------------------------------- orders tests --------------------------------//
+OrderRepository orderRepository = scope.ServiceProvider.GetRequiredService<OrderRepository>();
+
 CancellationToken cancellationToken = CancellationToken.None;
 
-// 1. Create a new product
-Console.WriteLine("Creating product...");
-await productRepository.CreateProduct("Sample Product", 19.99m, cancellationToken).ConfigureAwait(false);
-Console.WriteLine("Product created.");
+// 1. Create a new order
+Console.WriteLine("Creating order...");
+long orderId = await orderRepository.CreateOrder("test_user", cancellationToken).ConfigureAwait(false);
+Console.WriteLine($"Order created with ID: {orderId}");
 
-// 2. Search for products
-Console.WriteLine("Searching for products...");
-IEnumerable<Product> products = await productRepository.SearchProduct(
+// 2. Update the order status
+Console.WriteLine("Updating order status...");
+await orderRepository.UpdateOrderStatus(orderId, OrderState.Processing, cancellationToken).ConfigureAwait(false);
+Console.WriteLine("Order status updated to 'processing'.");
+
+// // 3. Search for orders
+Console.WriteLine("Searching for orders...");
+IEnumerable<Order> orders = await orderRepository.SearchOrders(
     pageIndex: 0,
     pageSize: 10,
-    nameSubstring: "Sample",
-    maxPrice: null,
-    minPrice: null,
-    cancellationToken: cancellationToken).ConfigureAwait(false);
+    cancellationToken: cancellationToken,
+    author: "test_user",
+    state: OrderState.Processing).ConfigureAwait(false);
 
-// Display the result
-Console.WriteLine("Products found:");
-foreach (Product product in products)
+Console.WriteLine("Orders found:");
+foreach (Order order in orders)
 {
-    Console.WriteLine($"Product ID: {product.Id}, Name: {product.Name}, Price: {product.Price}");
+    Console.WriteLine($"Order ID: {order.OrderId}, Status: {order.OrderState}, Created At: {order.CreatedAt}, Created By: {order.CreatedBy}");
 }

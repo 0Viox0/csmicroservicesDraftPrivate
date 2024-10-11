@@ -25,7 +25,7 @@ public class ProductRepository
 
         using NpgsqlConnection connection = await _dataSource.OpenConnectionAsync(cancellationToken).ConfigureAwait(false);
 
-        var command = new NpgsqlCommand(sql, connection)
+        using var command = new NpgsqlCommand(sql, connection)
         {
             Parameters =
             {
@@ -63,7 +63,7 @@ public class ProductRepository
         // the other way to disable CA2100 is to use just string concatenation
         // but StringBuilder is better in this context (to not create new string every time)
         #pragma warning disable CA2100
-        var command = new NpgsqlCommand(sql.ToString(), connection);
+        using var command = new NpgsqlCommand(sql.ToString(), connection);
         #pragma warning restore CA2100
 
         command.Parameters.AddWithValue("@pageSize", pageSize);
