@@ -3,7 +3,6 @@ using Microsoft.Extensions.DependencyInjection;
 using Npgsql;
 using Task3.Dal.Migrations;
 using Task3.Dal.Models;
-using Task3.Dal.Models.Enums;
 using Task3.Dal.Repositories;
 using Task3.Dal.RepositoryExtensions;
 
@@ -55,31 +54,68 @@ runner.MigrateUp();
 // }
 
 //-------------------------------- orders tests --------------------------------//
-OrderRepository orderRepository = scope.ServiceProvider.GetRequiredService<OrderRepository>();
+// OrderRepository orderRepository = scope.ServiceProvider.GetRequiredService<OrderRepository>();
+//
+// CancellationToken cancellationToken = CancellationToken.None;
+//
+// // 1. Create a new order
+// Console.WriteLine("Creating order...");
+// long orderId = await orderRepository.CreateOrder("test_user", cancellationToken).ConfigureAwait(false);
+// Console.WriteLine($"Order created with ID: {orderId}");
+//
+// // 2. Update the order status
+// Console.WriteLine("Updating order status...");
+// await orderRepository.UpdateOrderStatus(orderId, OrderState.Processing, cancellationToken).ConfigureAwait(false);
+// Console.WriteLine("Order status updated to 'processing'.");
+//
+// // // 3. Search for orders
+// Console.WriteLine("Searching for orders...");
+// IEnumerable<Order> orders = await orderRepository.SearchOrders(
+//     pageIndex: 0,
+//     pageSize: 10,
+//     cancellationToken: cancellationToken,
+//     author: "test_user",
+//     state: OrderState.Processing).ConfigureAwait(false);
+//
+// Console.WriteLine("Orders found:");
+// foreach (Order order in orders)
+// {
+//     Console.WriteLine($"Order ID: {order.Id}, Status: {order.State}, Created At: {order.CreatedAt}, Created By: {order.CreatedBy}");
+// }
 
+//-------------------------------- order item tests --------------------------------//
+OrderItemRepository orderItemRepository = serviceProvider.GetRequiredService<OrderItemRepository>();
 CancellationToken cancellationToken = CancellationToken.None;
 
-// 1. Create a new order
-Console.WriteLine("Creating order...");
-long orderId = await orderRepository.CreateOrder("test_user", cancellationToken).ConfigureAwait(false);
-Console.WriteLine($"Order created with ID: {orderId}");
+// Testing creation of an order item
+Console.WriteLine("Creating an order item...");
+long newOrderItemId = await orderItemRepository.CreateOrderItem(
+    orderId: 10,
+    productId: 1,
+    quantity: 5,
+    cancellationToken: cancellationToken).ConfigureAwait(false);
+Console.WriteLine($"Order item created with ID: {newOrderItemId}");
 
-// 2. Update the order status
-Console.WriteLine("Updating order status...");
-await orderRepository.UpdateOrderStatus(orderId, OrderState.Processing, cancellationToken).ConfigureAwait(false);
-Console.WriteLine("Order status updated to 'processing'.");
+// Testing soft-deletion of an order item
+Console.WriteLine("Soft deleting the order item...");
+await orderItemRepository.SoftDeleteItem(
+    orderItemId: newOrderItemId,
+    cancellationToken: cancellationToken).ConfigureAwait(false);
+Console.WriteLine("Order item soft-deleted.");
 
-// // 3. Search for orders
-Console.WriteLine("Searching for orders...");
-IEnumerable<Order> orders = await orderRepository.SearchOrders(
+// Testing paginated search for order items
+Console.WriteLine("Searching for order items...");
+IEnumerable<OrderItem> orderItems = await orderItemRepository.SearchOrderItems(
     pageIndex: 0,
     pageSize: 10,
     cancellationToken: cancellationToken,
-    author: "test_user",
-    state: OrderState.Processing).ConfigureAwait(false);
+    productId: null,
+    isDeleted: true,
+    quantity: null).ConfigureAwait(false);
 
-Console.WriteLine("Orders found:");
-foreach (Order order in orders)
+// Display the search result
+Console.WriteLine("Order items found:");
+foreach (OrderItem item in orderItems)
 {
-    Console.WriteLine($"Order ID: {order.OrderId}, Status: {order.OrderState}, Created At: {order.CreatedAt}, Created By: {order.CreatedBy}");
+    Console.WriteLine($"Order Item ID: {item.Id}, Order ID: {item.OrderId}, Product ID: {item.ProductId}, Quantity: {item.ItemQuantity}, Is Deleted: {item.IsOrderItemDeleted}");
 }

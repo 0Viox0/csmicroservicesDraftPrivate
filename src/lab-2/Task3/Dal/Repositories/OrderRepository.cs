@@ -76,10 +76,13 @@ public class OrderRepository
         }
 
         sql.Append(@"
-                ORDER BY order_created_at DESC
-                LIMIT @pageSize OFFSET @offset;");
+                order by order_created_at desc
+                limit @pageSize offset @offset;");
 
         using NpgsqlConnection connection = await _dataSource.OpenConnectionAsync(cancellationToken).ConfigureAwait(false);
+
+        // the other way to disable CA2100 is to use just string concatenation
+        // but StringBuilder is better in this context (to not create new string every time)
         #pragma warning disable CA2100
         using var command = new NpgsqlCommand(sql.ToString(), connection);
         #pragma warning restore CA2100
@@ -111,8 +114,8 @@ public class OrderRepository
         {
             orders.Add(new Order
             {
-                OrderId = reader.GetInt32(0),
-                OrderState = (OrderState)Enum.Parse(typeof(OrderState), reader.GetString(1), true),
+                Id = reader.GetInt32(0),
+                State = (OrderState)Enum.Parse(typeof(OrderState), reader.GetString(1), true),
                 CreatedAt = reader.GetDateTime(2),
                 CreatedBy = reader.GetString(3),
             });

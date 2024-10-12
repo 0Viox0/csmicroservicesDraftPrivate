@@ -4,9 +4,9 @@ namespace Task3.Dal.Models;
 
  public class Order
 {
-    public long OrderId { get; set; }
+    public long Id { get; set; }
 
-    public OrderState? OrderState { get; set; }
+    public OrderState? State { get; set; }
 
     public DateTime CreatedAt { get; set; }
 
