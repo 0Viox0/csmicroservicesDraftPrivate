@@ -25,7 +25,7 @@ public class CustomConfigurationProvider : ConfigurationProvider
                 if (!Data.TryGetValue(keyValuePair.Key, out string? existingValue)
                     || existingValue != keyValuePair.Value)
                 {
-                    Data[keyValuePair.Key] = keyValuePair.Value;
+                    Data[$"DatabaseSettings:{keyValuePair.Key}"] = keyValuePair.Value;
                     configurationChanged = true;
                 }
             }
@@ -33,7 +33,7 @@ public class CustomConfigurationProvider : ConfigurationProvider
             var keysToRemove = Data.Keys.Except(itemList.Select(item => item.Key)).ToList();
             foreach (string? key in keysToRemove)
             {
-                Data.Remove(key);
+                Data.Remove($"DatabaseSettings:{key}");
                 configurationChanged = true;
             }
         }

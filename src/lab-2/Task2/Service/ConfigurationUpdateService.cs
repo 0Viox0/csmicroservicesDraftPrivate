@@ -36,7 +36,7 @@ public class ConfigurationUpdateService : IDisposable
         }
     }
 
-    private async Task UpdateConfiguration(int pageSize, string pageToken, CancellationToken cancellationToken)
+    public async Task UpdateConfiguration(int pageSize, string pageToken, CancellationToken cancellationToken)
     {
         QueryConfigurationsResponse response = await _configurationClient
             .GetConfigurationsAsync(pageSize, pageToken, cancellationToken)

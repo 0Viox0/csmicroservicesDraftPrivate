@@ -15,6 +15,7 @@ public static class CustomConfigurationExtensions
     {
         services.AddRefitConfigurationClient(baseUrl);
         services.AddSingleton<CustomConfigurationProvider>();
+        services.AddSingleton<CustomConfigurationProviderSource>();
 
         services.AddSingleton(serviceProvider =>
         {

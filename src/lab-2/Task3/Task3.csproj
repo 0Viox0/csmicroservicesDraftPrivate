@@ -11,7 +11,12 @@
       <PackageReference Include="FluentMigrator" />
       <PackageReference Include="FluentMigrator.Extensions.Postgres" />
       <PackageReference Include="FluentMigrator.Runner" />
+      <PackageReference Include="Microsoft.Extensions.Configuration.Json" />
       <PackageReference Include="Npgsql" />
+    </ItemGroup>
+
+    <ItemGroup>
+      <ProjectReference Include="..\Task2\Task2.csproj" />
     </ItemGroup>
 
 </Project>
