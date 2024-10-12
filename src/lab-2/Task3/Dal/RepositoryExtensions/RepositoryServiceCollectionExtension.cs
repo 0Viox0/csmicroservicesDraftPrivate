@@ -10,6 +10,7 @@ public static class RepositoryServiceCollectionExtension
         services.AddSingleton<ProductRepository>();
         services.AddSingleton<OrderRepository>();
         services.AddSingleton<OrderItemRepository>();
+        services.AddSingleton<OrderHistoryRepository>();
 
         return services;
     }

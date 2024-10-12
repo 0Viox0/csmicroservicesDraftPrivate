@@ -3,6 +3,7 @@ using Microsoft.Extensions.DependencyInjection;
 using Npgsql;
 using Task3.Dal.Migrations;
 using Task3.Dal.Models;
+using Task3.Dal.Models.Enums;
 using Task3.Dal.Repositories;
 using Task3.Dal.RepositoryExtensions;
 
@@ -83,39 +84,68 @@ runner.MigrateUp();
 //     Console.WriteLine($"Order ID: {order.Id}, Status: {order.State}, Created At: {order.CreatedAt}, Created By: {order.CreatedBy}");
 // }
 
-//-------------------------------- order item tests --------------------------------//
-OrderItemRepository orderItemRepository = serviceProvider.GetRequiredService<OrderItemRepository>();
+// //-------------------------------- order item tests --------------------------------//
+// OrderItemRepository orderItemRepository = serviceProvider.GetRequiredService<OrderItemRepository>();
+// CancellationToken cancellationToken = CancellationToken.None;
+//
+// // Testing creation of an order item
+// Console.WriteLine("Creating an order item...");
+// long newOrderItemId = await orderItemRepository.CreateOrderItem(
+//     orderId: 10,
+//     productId: 1,
+//     quantity: 5,
+//     cancellationToken: cancellationToken).ConfigureAwait(false);
+// Console.WriteLine($"Order item created with ID: {newOrderItemId}");
+//
+// // Testing soft-deletion of an order item
+// Console.WriteLine("Soft deleting the order item...");
+// await orderItemRepository.SoftDeleteItem(
+//     orderItemId: newOrderItemId,
+//     cancellationToken: cancellationToken).ConfigureAwait(false);
+// Console.WriteLine("Order item soft-deleted.");
+//
+// // Testing paginated search for order items
+// Console.WriteLine("Searching for order items...");
+// IEnumerable<OrderItem> orderItems = await orderItemRepository.SearchOrderItems(
+//     pageIndex: 0,
+//     pageSize: 10,
+//     cancellationToken: cancellationToken,
+//     productId: null,
+//     isDeleted: true,
+//     quantity: null).ConfigureAwait(false);
+//
+// // Display the search result
+// Console.WriteLine("Order items found:");
+// foreach (OrderItem item in orderItems)
+// {
+//     Console.WriteLine($"Order Item ID: {item.Id}, Order ID: {item.OrderId}, Product ID: {item.ProductId}, Quantity: {item.ItemQuantity}, Is Deleted: {item.IsOrderItemDeleted}");
+// }
+
+//-------------------------------- order history tests --------------------------------//
+OrderHistoryRepository orderHistoryRepository = serviceProvider.GetRequiredService<OrderHistoryRepository>();
 CancellationToken cancellationToken = CancellationToken.None;
 
-// Testing creation of an order item
-Console.WriteLine("Creating an order item...");
-long newOrderItemId = await orderItemRepository.CreateOrderItem(
+// Testing creation of an order history item
+Console.WriteLine("Creating an order history item...");
+long newOrderHistoryItemId = await orderHistoryRepository.CreateOrderHistory(
     orderId: 10,
-    productId: 1,
-    quantity: 5,
+    orderHistoryItemKind: OrderHistoryItemKind.Created,
+    payload: "{\"description\":\"Order created\"}",
     cancellationToken: cancellationToken).ConfigureAwait(false);
-Console.WriteLine($"Order item created with ID: {newOrderItemId}");
+Console.WriteLine($"Order history item created with ID: {newOrderHistoryItemId}");
 
-// Testing soft-deletion of an order item
-Console.WriteLine("Soft deleting the order item...");
-await orderItemRepository.SoftDeleteItem(
-    orderItemId: newOrderItemId,
-    cancellationToken: cancellationToken).ConfigureAwait(false);
-Console.WriteLine("Order item soft-deleted.");
-
-// Testing paginated search for order items
-Console.WriteLine("Searching for order items...");
-IEnumerable<OrderItem> orderItems = await orderItemRepository.SearchOrderItems(
+// Testing paginated search for order history items
+Console.WriteLine("Searching for order history items...");
+IEnumerable<OrderHistoryItem> orderHistoryItems = await orderHistoryRepository.GetOrderHistory(
     pageIndex: 0,
     pageSize: 10,
     cancellationToken: cancellationToken,
-    productId: null,
-    isDeleted: true,
-    quantity: null).ConfigureAwait(false);
+    historyItemKind: OrderHistoryItemKind.Created,
+    orderId: 10).ConfigureAwait(false);
 
 // Display the search result
-Console.WriteLine("Order items found:");
-foreach (OrderItem item in orderItems)
+Console.WriteLine("Order history items found:");
+foreach (OrderHistoryItem item in orderHistoryItems)
 {
-    Console.WriteLine($"Order Item ID: {item.Id}, Order ID: {item.OrderId}, Product ID: {item.ProductId}, Quantity: {item.ItemQuantity}, Is Deleted: {item.IsOrderItemDeleted}");
+    Console.WriteLine($"Order History Item ID: {item.Id}, Order ID: {item.OrderId}, Created At: {item.CreatedAt}, Kind: {item.Kind}, Payload: {item.Payload}");
 }
