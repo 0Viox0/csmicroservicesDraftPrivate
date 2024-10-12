@@ -7,10 +7,10 @@ public static class RepositoryServiceCollectionExtension
 {
     public static IServiceCollection AddRepositories(this IServiceCollection services)
     {
-        services.AddSingleton<ProductRepository>();
-        services.AddSingleton<OrderRepository>();
-        services.AddSingleton<OrderItemRepository>();
-        services.AddSingleton<OrderHistoryRepository>();
+        services.AddScoped<ProductRepository>();
+        services.AddScoped<OrderRepository>();
+        services.AddScoped<OrderItemRepository>();
+        services.AddScoped<OrderHistoryRepository>();
 
         return services;
     }

@@ -1,5 +1,6 @@
 using Npgsql;
 using System.Text;
+using Task3.Bll.Dtos.OrderDtos;
 using Task3.Dal.Models;
 
 namespace Task3.Dal.Repositories;
@@ -13,7 +14,7 @@ public class OrderItemRepository
         _datasource = datasource;
     }
 
-    public async Task<long> CreateOrderItem(long orderId, int productId, int quantity, CancellationToken cancellationToken)
+    public async Task<long> CreateOrderItem(OrderItemCreationDto orderItemCreationDto, CancellationToken cancellationToken)
     {
         string sql = """
                      insert into order_items (order_id, product_id, order_item_quantity, order_item_deleted)
@@ -23,9 +24,9 @@ public class OrderItemRepository
 
         using NpgsqlConnection connection = await _datasource.OpenConnectionAsync().ConfigureAwait(false);
         using var command = new NpgsqlCommand(sql, connection);
-        command.Parameters.AddWithValue("@OrderId", orderId);
-        command.Parameters.AddWithValue("@ProductId", productId);
-        command.Parameters.AddWithValue("@Quantity", quantity);
+        command.Parameters.AddWithValue("@OrderId", orderItemCreationDto.OrderId);
+        command.Parameters.AddWithValue("@ProductId", orderItemCreationDto.ProductId);
+        command.Parameters.AddWithValue("@Quantity", orderItemCreationDto.Quantity);
 
         return (long)(await command.ExecuteScalarAsync(cancellationToken).ConfigureAwait(false) ?? -1);
     }
@@ -49,8 +50,8 @@ public class OrderItemRepository
         int pageIndex,
         int pageSize,
         CancellationToken cancellationToken,
-        string? orderId = null,
-        int? productId = null,
+        long? orderId = null,
+        long? productId = null,
         bool? isDeleted = null,
         int? quantity = null)
     {
@@ -60,7 +61,7 @@ public class OrderItemRepository
                                     where 1=1
                                     """);
 
-        if (!string.IsNullOrEmpty(orderId))
+        if (orderId.HasValue)
         {
             sql.Append(" AND order_id = @OrderId");
         }
@@ -92,7 +93,7 @@ public class OrderItemRepository
         using var command = new NpgsqlCommand(sql.ToString(), connection);
         #pragma warning restore CA2100
 
-        if (!string.IsNullOrEmpty(orderId))
+        if (orderId.HasValue)
         {
             command.Parameters.AddWithValue("@OrderId", orderId);
         }

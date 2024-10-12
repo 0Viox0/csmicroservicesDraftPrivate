@@ -1,5 +1,7 @@
 using Npgsql;
 using System.Text;
+using Task3.Bll.Dtos.OrderDtos;
+using Task3.Bll.Extensions;
 using Task3.Dal.Models;
 using Task3.Dal.Models.Enums;
 
@@ -29,28 +31,23 @@ public class OrderHistoryRepository
         using var command = new NpgsqlCommand(sql, connection);
         command.Parameters.AddWithValue("OrderId", orderId);
         command.Parameters.AddWithValue("CreatedAt", DateTimeOffset.UtcNow);
-        command.Parameters.AddWithValue("Kind", orderHistoryItemKind.ToString().ToLowerInvariant());
+        command.Parameters.AddWithValue("Kind", orderHistoryItemKind.ToString().FromPascalToSnakeCase());
         command.Parameters.AddWithValue("Payload", payload);
 
         return (long)(await command.ExecuteScalarAsync(cancellationToken).ConfigureAwait(false) ?? -1);
     }
 
     public async Task<IEnumerable<OrderHistoryItem>> GetOrderHistory(
-        int pageIndex,
-        int pageSize,
+        OrderHistoryItemSearchDto orderHistoryItemSearchDto,
         CancellationToken cancellationToken,
-        OrderHistoryItemKind? historyItemKind = null,
-        long? orderId = null)
+        OrderHistoryItemKind? historyItemKind = null)
     {
         var sql = new StringBuilder("""
                                     select order_history_item_id, order_id, order_history_item_created_at, order_history_item_kind, order_history_item_payload
                                     from order_history
                                     where 1=1
                                     """);
-        if (orderId.HasValue)
-        {
-            sql.Append(" and order_history.order_id = @OrderId");
-        }
+        sql.Append(" and order_history.order_id = @OrderId");
 
         if (historyItemKind.HasValue)
         {
@@ -58,7 +55,7 @@ public class OrderHistoryRepository
         }
 
         sql.Append("""
-                    order by order_history_item_created_at desc
+                    order by order_history_item_created_at asc
                    limit @PageSize offset @Offset;
                    """);
 
@@ -70,10 +67,7 @@ public class OrderHistoryRepository
         using var command = new NpgsqlCommand(sql.ToString(), connection);
         #pragma warning restore CA2100
 
-        if (orderId.HasValue)
-        {
-            command.Parameters.AddWithValue("@OrderId", orderId);
-        }
+        command.Parameters.AddWithValue("@OrderId", orderHistoryItemSearchDto.OrderId);
 
         if (historyItemKind.HasValue)
         {
@@ -82,8 +76,8 @@ public class OrderHistoryRepository
                 historyItemKind.Value.ToString().ToLowerInvariant());
         }
 
-        command.Parameters.AddWithValue("PageSize", pageSize);
-        command.Parameters.AddWithValue("Offset", pageIndex * pageSize);
+        command.Parameters.AddWithValue("PageSize", orderHistoryItemSearchDto.PageSize);
+        command.Parameters.AddWithValue("Offset", orderHistoryItemSearchDto.PageIndex * orderHistoryItemSearchDto.PageSize);
 
         NpgsqlDataReader reader = await command.ExecuteReaderAsync(cancellationToken).ConfigureAwait(false);
 
@@ -96,7 +90,10 @@ public class OrderHistoryRepository
                 Id = reader.GetInt64(0),
                 OrderId = reader.GetInt64(1),
                 CreatedAt = reader.GetDateTime(2),
-                Kind = (OrderHistoryItemKind)Enum.Parse(typeof(OrderHistoryItemKind), reader.GetString(3), true),
+                Kind = (OrderHistoryItemKind)Enum.Parse(
+                    typeof(OrderHistoryItemKind),
+                    reader.GetString(3).FromSnakeToPascalCase(),
+                    true),
                 Payload = reader.GetString(4),
             });
         }
