@@ -9,10 +9,10 @@ public static class ConfigurationManagerExtensions
         this IServiceCollection services,
         ConfigurationManager configurationManger)
     {
-        string projectDirectory = Path.GetFullPath(Path.Combine(AppContext.BaseDirectory, "../../../../Task3"));
+        string jsonDirectory = Path.GetFullPath(Path.Combine(AppContext.BaseDirectory, "../../../../Task3MainFunction"));
 
         configurationManger
-            .SetBasePath(projectDirectory)
+            .SetBasePath(jsonDirectory)
             .AddJsonFile("externalServiceConnectionInfo.json");
 
         return services;
