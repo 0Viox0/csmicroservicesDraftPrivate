@@ -1,5 +1,7 @@
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Options;
 using Refit;
+using Task1.ConfigurationModels;
 using Task1.Implementations;
 using Task1.Interfaces;
 
@@ -21,11 +23,17 @@ public static class ConfigurationClientExtensions
     }
 
     public static IServiceCollection AddRefitConfigurationClient(
-        this IServiceCollection services,
-        string baseUrl)
+        this IServiceCollection services)
     {
         services.AddRefitClient<IRefitConfigurationClient>()
-            .ConfigureHttpClient(c => c.BaseAddress = new Uri(baseUrl));
+            .ConfigureHttpClient((serviceProvider, c) =>
+            {
+                ExternalConnectionInfo externalConnectionInfo =
+                    serviceProvider.GetRequiredService<IOptions<ExternalConnectionInfo>>().Value;
+
+                string baseUrl = $"http://{externalConnectionInfo.Host}:{externalConnectionInfo.Port}";
+                c.BaseAddress = new Uri(baseUrl);
+            });
 
         services.AddTransient<IConfigurationClient, RefitConfigurationClient>();
 

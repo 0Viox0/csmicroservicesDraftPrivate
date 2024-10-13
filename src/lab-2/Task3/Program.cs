@@ -3,44 +3,38 @@
 using FluentMigrator.Runner;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
-using Microsoft.Extensions.Options;
-using Npgsql;
 using Task2.ConfigurationProviders;
 using Task2.Extensions;
 using Task2.Service;
-using Task3.Bll;
 using Task3.Bll.Dtos.OrderDtos;
 using Task3.Bll.Dtos.ProductDtos;
 using Task3.Bll.Extensions;
 using Task3.Bll.Services;
-using Task3.Dal.Migrations;
 using Task3.Dal.RepositoryExtensions;
 
 var configurationManger = new ConfigurationManager();
 IConfigurationBuilder configurationBuilder = configurationManger;
 
+string projectDirectory = Path.GetFullPath(Path.Combine(AppContext.BaseDirectory, "../../../../Task3"));;
+
+configurationManger
+    .SetBasePath(projectDirectory)
+    .AddJsonFile("externalServiceConnectionInfo.json");
+
 ServiceProvider serviceProvider = new ServiceCollection()
-    .AddCustomConfiguration("http://localhost:8080", TimeSpan.FromSeconds(2))
-    .AddDatabaseConfiguration(configurationManger)
+    .AddExternalServiceOptions(configurationManger)
+    .AddDatabaseOptions(configurationManger)
+    .AddCustomConfiguration(TimeSpan.FromSeconds(2))
     .AddRepositories()
     .AddBllServices()
-    .AddFluentMigratorCore()
-    .ConfigureRunner(rb => rb
-        .AddPostgres()
-        .WithGlobalConnectionString(sp => sp.GetRequiredService<IOptions<DatabaseSettings>>().Value.ConnectionString)
-        .ScanIn(typeof(CreateProductTable).Assembly).For.Migrations())
-
-    // .AddLogging(lb => lb.AddFluentMigratorConsole())
-    .AddSingleton(sp =>
-    {
-        DatabaseSettings dbSettings = sp.GetRequiredService<IOptions<DatabaseSettings>>().Value;
-        return NpgsqlDataSource.Create(dbSettings.ConnectionString);
-    })
+    .AddMigrations()
+    .AddNpgsqlDataSource()
     .BuildServiceProvider();
 
 using IServiceScope scope = serviceProvider.CreateScope();
 
-configurationBuilder.Add(scope.ServiceProvider.GetRequiredService<CustomConfigurationProviderSource>());
+configurationBuilder
+    .Add(scope.ServiceProvider.GetRequiredService<CustomConfigurationProviderSource>());
 
 ConfigurationUpdateService configurationUpdateService =
     scope.ServiceProvider.GetRequiredService<ConfigurationUpdateService>();

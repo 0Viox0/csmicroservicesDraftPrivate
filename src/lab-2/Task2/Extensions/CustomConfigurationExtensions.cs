@@ -10,10 +10,9 @@ public static class CustomConfigurationExtensions
 {
     public static IServiceCollection AddCustomConfiguration(
         this IServiceCollection services,
-        string baseUrl,
         TimeSpan updateInterval)
     {
-        services.AddRefitConfigurationClient(baseUrl);
+        services.AddRefitConfigurationClient();
         services.AddSingleton<CustomConfigurationProvider>();
         services.AddSingleton<CustomConfigurationProviderSource>();
 
