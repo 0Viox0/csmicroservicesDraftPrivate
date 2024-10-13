@@ -25,7 +25,7 @@ public class Lab2Task2Tests
         IChangeToken reloadTokenBeforeUpdate = _provider.GetReloadToken();
         _provider.UpdateConfiguration(items);
 
-        _provider.TryGet("key1", out string? value).Should().BeTrue();
+        _provider.TryGet("DatabaseSettings:key1", out string? value).Should().BeTrue();
         value.Should().Be("value1");
 
         _provider.GetReloadToken().Should().NotBe(reloadTokenBeforeUpdate);
@@ -44,7 +44,7 @@ public class Lab2Task2Tests
         IChangeToken reloadTokenBeforeUpdate = _provider.GetReloadToken();
         _provider.UpdateConfiguration(items);
 
-        _provider.TryGet("key1", out string? value).Should().BeTrue();
+        _provider.TryGet("DatabaseSettings:key1", out string? value).Should().BeTrue();
         value.Should().Be("value1");
 
         _provider.GetReloadToken().Should().Be(reloadTokenBeforeUpdate);
@@ -68,7 +68,7 @@ public class Lab2Task2Tests
         IChangeToken reloadTokenBeforeUpdate = _provider.GetReloadToken();
         _provider.UpdateConfiguration(updatedItems);
 
-        _provider.TryGet("key1", out string? value).Should().BeTrue();
+        _provider.TryGet("DatabaseSettings:key1", out string? value).Should().BeTrue();
         value.Should().Be("value2");
 
         _provider.GetReloadToken().Should().NotBe(reloadTokenBeforeUpdate);
@@ -87,7 +87,7 @@ public class Lab2Task2Tests
         IChangeToken reloadTokenBeforeUpdate = _provider.GetReloadToken();
         _provider.UpdateConfiguration([]);
 
-        _provider.TryGet("key1", out _).Should().BeFalse();
+        _provider.TryGet("DatabaseSettings:key1", out _).Should().BeFalse();
         _provider.GetReloadToken().Should().NotBe(reloadTokenBeforeUpdate);
     }
 }
