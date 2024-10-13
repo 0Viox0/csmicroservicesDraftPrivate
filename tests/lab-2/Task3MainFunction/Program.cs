@@ -12,10 +12,11 @@ using Task3.Dal.RepositoryExtensions;
 
 namespace Task3MainFunction;
 
-public class Program
+public static class Program
 {
     public static async Task Main(string[] args)
     {
+        //-------------------------------- setting everything up --------------------------------//
         var configurationManger = new ConfigurationManager();
         IConfigurationBuilder configurationBuilder = configurationManger;
 
