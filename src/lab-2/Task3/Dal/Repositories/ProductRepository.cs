@@ -6,16 +6,10 @@ namespace Task3.Dal.Repositories;
 
 public class ProductRepository
 {
-    private readonly NpgsqlDataSource _dataSource;
-
-    public ProductRepository(NpgsqlDataSource dataSource)
-    {
-        _dataSource = dataSource;
-    }
-
     public async Task CreateProduct(
         string name,
         decimal productPrice,
+        NpgsqlTransaction transaction,
         CancellationToken cancellationToken)
     {
         const string sql = """
@@ -23,16 +17,9 @@ public class ProductRepository
                            values (@name, @product_price)
                            """;
 
-        using NpgsqlConnection connection = await _dataSource.OpenConnectionAsync(cancellationToken).ConfigureAwait(false);
-
-        using var command = new NpgsqlCommand(sql, connection)
-        {
-            Parameters =
-            {
-                new NpgsqlParameter("name", name),
-                new NpgsqlParameter("product_price", productPrice),
-            },
-        };
+        using var command = new NpgsqlCommand(sql, transaction.Connection, transaction);
+        command.Parameters.Add(new NpgsqlParameter("@name", name));
+        command.Parameters.Add(new NpgsqlParameter("@product_price", productPrice));
 
         await command.ExecuteNonQueryAsync(cancellationToken).ConfigureAwait(false);
     }
@@ -40,10 +27,11 @@ public class ProductRepository
     public async Task<IEnumerable<Product>> SearchProduct(
         int pageIndex,
         int pageSize,
-        string? nameSubstring,
-        decimal? maxPrice,
-        decimal? minPrice,
-        CancellationToken cancellationToken)
+        NpgsqlTransaction transaction,
+        CancellationToken cancellationToken,
+        string? nameSubstring = null,
+        decimal? maxPrice = null,
+        decimal? minPrice = null)
     {
         var sql = new StringBuilder("SELECT * FROM products WHERE 1=1");
 
@@ -58,12 +46,10 @@ public class ProductRepository
 
         sql.Append(" ORDER BY product_id LIMIT @pageSize OFFSET @pageIndex");
 
-        using NpgsqlConnection connection = await _dataSource.OpenConnectionAsync().ConfigureAwait(false);
-
         // the other way to disable CA2100 is to use just string concatenation
         // but StringBuilder is better in this context (to not create new string every time)
         #pragma warning disable CA2100
-        using var command = new NpgsqlCommand(sql.ToString(), connection);
+        using var command = new NpgsqlCommand(sql.ToString(), transaction.Connection, transaction);
         #pragma warning restore CA2100
 
         command.Parameters.AddWithValue("@pageSize", pageSize);

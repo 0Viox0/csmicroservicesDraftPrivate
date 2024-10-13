@@ -7,14 +7,10 @@ namespace Task3.Dal.Repositories;
 
 public class OrderItemRepository
 {
-    private readonly NpgsqlDataSource _datasource;
-
-    public OrderItemRepository(NpgsqlDataSource datasource)
-    {
-        _datasource = datasource;
-    }
-
-    public async Task<long> CreateOrderItem(OrderItemCreationDto orderItemCreationDto, CancellationToken cancellationToken)
+    public async Task<long> CreateOrderItem(
+        OrderItemCreationDto orderItemCreationDto,
+        NpgsqlTransaction transaction,
+        CancellationToken cancellationToken)
     {
         string sql = """
                      insert into order_items (order_id, product_id, order_item_quantity, order_item_deleted)
@@ -22,8 +18,7 @@ public class OrderItemRepository
                      returning order_item_id;
                      """;
 
-        using NpgsqlConnection connection = await _datasource.OpenConnectionAsync().ConfigureAwait(false);
-        using var command = new NpgsqlCommand(sql, connection);
+        using var command = new NpgsqlCommand(sql, transaction.Connection, transaction);
         command.Parameters.AddWithValue("@OrderId", orderItemCreationDto.OrderId);
         command.Parameters.AddWithValue("@ProductId", orderItemCreationDto.ProductId);
         command.Parameters.AddWithValue("@Quantity", orderItemCreationDto.Quantity);
@@ -31,7 +26,10 @@ public class OrderItemRepository
         return (long)(await command.ExecuteScalarAsync(cancellationToken).ConfigureAwait(false) ?? -1);
     }
 
-    public async Task SoftDeleteItem(long orderItemId, CancellationToken cancellationToken)
+    public async Task SoftDeleteItem(
+        long orderItemId,
+        NpgsqlTransaction transaction,
+        CancellationToken cancellationToken)
     {
         string sql = """
                      update order_items
@@ -39,8 +37,7 @@ public class OrderItemRepository
                      where order_item_id = @OrderItemId;
                      """;
 
-        using NpgsqlConnection connection = await _datasource.OpenConnectionAsync().ConfigureAwait(false);
-        using var command = new NpgsqlCommand(sql, connection);
+        using var command = new NpgsqlCommand(sql, transaction.Connection, transaction);
         command.Parameters.AddWithValue("@OrderItemId", orderItemId);
 
         await command.ExecuteNonQueryAsync(cancellationToken).ConfigureAwait(false);
@@ -49,6 +46,7 @@ public class OrderItemRepository
     public async Task<IEnumerable<OrderItem>> SearchOrderItems(
         int pageIndex,
         int pageSize,
+        NpgsqlTransaction transaction,
         CancellationToken cancellationToken,
         long? orderId = null,
         long? productId = null,
@@ -62,56 +60,31 @@ public class OrderItemRepository
                                     """);
 
         if (orderId.HasValue)
-        {
             sql.Append(" AND order_id = @OrderId");
-        }
-
         if (productId.HasValue)
-        {
             sql.Append(" AND product_id = @ProductId");
-        }
-
         if (isDeleted.HasValue)
-        {
             sql.Append(" AND order_item_deleted = @IsDeleted");
-        }
-
         if (quantity.HasValue)
-        {
             sql.Append(" AND quantity = @Quantity");
-        }
 
         sql.Append(" order by order_item_quantity");
         sql.Append(" limit @PageSize offset @PageIndex");
 
-        using NpgsqlConnection connection
-            = await _datasource.OpenConnectionAsync(cancellationToken).ConfigureAwait(false);
-
         // the other way to disable CA2100 is to use just string concatenation
         // but StringBuilder is better in this context (to not create new string every time)
         #pragma warning disable CA2100
-        using var command = new NpgsqlCommand(sql.ToString(), connection);
+        using var command = new NpgsqlCommand(sql.ToString(), transaction.Connection, transaction);
         #pragma warning restore CA2100
 
         if (orderId.HasValue)
-        {
             command.Parameters.AddWithValue("@OrderId", orderId);
-        }
-
         if (productId.HasValue)
-        {
             command.Parameters.AddWithValue("@ProductId", productId);
-        }
-
         if (isDeleted.HasValue)
-        {
             command.Parameters.AddWithValue("@IsDeleted", isDeleted);
-        }
-
         if (quantity.HasValue)
-        {
             command.Parameters.AddWithValue("@Quantity", quantity);
-        }
 
         command.Parameters.AddWithValue("@PageSize", pageSize);
         command.Parameters.AddWithValue("@PageIndex", pageIndex);

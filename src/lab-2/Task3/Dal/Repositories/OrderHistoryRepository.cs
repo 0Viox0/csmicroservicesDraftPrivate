@@ -9,17 +9,11 @@ namespace Task3.Dal.Repositories;
 
 public class OrderHistoryRepository
 {
-    private readonly NpgsqlDataSource _dataSource;
-
-    public OrderHistoryRepository(NpgsqlDataSource dataSource)
-    {
-        _dataSource = dataSource;
-    }
-
     public async Task<long> CreateOrderHistory(
         long orderId,
         OrderHistoryItemKind orderHistoryItemKind,
         string payload,
+        NpgsqlTransaction transaction,
         CancellationToken cancellationToken)
     {
         const string sql = @"
@@ -27,18 +21,18 @@ public class OrderHistoryRepository
                     VALUES (@OrderId, @CreatedAt, @Kind::order_history_item_kind, @Payload::jsonb)
                     RETURNING order_history_item_id;";
 
-        using NpgsqlConnection connection = await _dataSource.OpenConnectionAsync(cancellationToken).ConfigureAwait(false);
-        using var command = new NpgsqlCommand(sql, connection);
-        command.Parameters.AddWithValue("OrderId", orderId);
-        command.Parameters.AddWithValue("CreatedAt", DateTimeOffset.UtcNow);
-        command.Parameters.AddWithValue("Kind", orderHistoryItemKind.ToString().FromPascalToSnakeCase());
-        command.Parameters.AddWithValue("Payload", payload);
+        using var command = new NpgsqlCommand(sql, transaction.Connection, transaction);
+        command.Parameters.AddWithValue("@OrderId", orderId);
+        command.Parameters.AddWithValue("@CreatedAt", DateTimeOffset.UtcNow);
+        command.Parameters.AddWithValue("@Kind", orderHistoryItemKind.ToString().FromPascalToSnakeCase());
+        command.Parameters.AddWithValue("@Payload", payload);
 
         return (long)(await command.ExecuteScalarAsync(cancellationToken).ConfigureAwait(false) ?? -1);
     }
 
     public async Task<IEnumerable<OrderHistoryItem>> GetOrderHistory(
         OrderHistoryItemSearchDto orderHistoryItemSearchDto,
+        NpgsqlTransaction transaction,
         CancellationToken cancellationToken,
         OrderHistoryItemKind? historyItemKind = null)
     {
@@ -50,21 +44,17 @@ public class OrderHistoryRepository
         sql.Append(" and order_history.order_id = @OrderId");
 
         if (historyItemKind.HasValue)
-        {
             sql.Append(" and order_history_item_kind = @OrderHistoryItemKind::order_history_item_kind");
-        }
 
         sql.Append("""
                     order by order_history_item_created_at asc
                    limit @PageSize offset @Offset;
                    """);
 
-        using NpgsqlConnection connection = await _dataSource.OpenConnectionAsync(cancellationToken).ConfigureAwait(false);
-
         // the other way to disable CA2100 is to use just string concatenation
         // but StringBuilder is better in this context (to not create new string every time)
         #pragma warning disable CA2100
-        using var command = new NpgsqlCommand(sql.ToString(), connection);
+        using var command = new NpgsqlCommand(sql.ToString(), transaction.Connection, transaction);
         #pragma warning restore CA2100
 
         command.Parameters.AddWithValue("@OrderId", orderHistoryItemSearchDto.OrderId);
@@ -76,10 +66,10 @@ public class OrderHistoryRepository
                 historyItemKind.Value.ToString().ToLowerInvariant());
         }
 
-        command.Parameters.AddWithValue("PageSize", orderHistoryItemSearchDto.PageSize);
-        command.Parameters.AddWithValue("Offset", orderHistoryItemSearchDto.PageIndex * orderHistoryItemSearchDto.PageSize);
+        command.Parameters.AddWithValue("@PageSize", orderHistoryItemSearchDto.PageSize);
+        command.Parameters.AddWithValue("@Offset", orderHistoryItemSearchDto.PageIndex * orderHistoryItemSearchDto.PageSize);
 
-        NpgsqlDataReader reader = await command.ExecuteReaderAsync(cancellationToken).ConfigureAwait(false);
+        using NpgsqlDataReader reader = await command.ExecuteReaderAsync(cancellationToken).ConfigureAwait(false);
 
         var orderHistories = new List<OrderHistoryItem>();
 

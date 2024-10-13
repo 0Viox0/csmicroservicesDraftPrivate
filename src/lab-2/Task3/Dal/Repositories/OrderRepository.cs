@@ -7,14 +7,10 @@ namespace Task3.Dal.Repositories;
 
 public class OrderRepository
 {
-    private readonly NpgsqlDataSource _dataSource;
-
-    public OrderRepository(NpgsqlDataSource dataSource)
-    {
-        _dataSource = dataSource;
-    }
-
-    public async Task<long> CreateOrder(string createdBy, CancellationToken cancellationToken)
+    public async Task<long> CreateOrder(
+        string createdBy,
+        NpgsqlTransaction transaction,
+        CancellationToken cancellationToken)
     {
         string sql = """
                      insert into orders (order_state, order_created_at, order_created_by)
@@ -22,16 +18,17 @@ public class OrderRepository
                      RETURNING order_id
                      """;
 
-        using NpgsqlConnection connection = await _dataSource.OpenConnectionAsync().ConfigureAwait(false);
-        using var command = new NpgsqlCommand(sql, connection)
-        {
-            Parameters = { new NpgsqlParameter("createdBy", createdBy) },
-        };
+        using var command = new NpgsqlCommand(sql, transaction.Connection, transaction);
+        command.Parameters.Add(new NpgsqlParameter("@createdBy", createdBy));
 
         return (long)(await command.ExecuteScalarAsync(cancellationToken).ConfigureAwait(false) ?? -1L);
     }
 
-    public async Task UpdateOrderStatus(long orderId, OrderState state, CancellationToken cancellationToken)
+    public async Task UpdateOrderStatus(
+        long orderId,
+        OrderState state,
+        NpgsqlTransaction transaction,
+        CancellationToken cancellationToken)
     {
         string sql = """
                      UPDATE orders SET
@@ -39,8 +36,7 @@ public class OrderRepository
                      WHERE order_id = @orderId
                      """;
 
-        using NpgsqlConnection connection = await _dataSource.OpenConnectionAsync(cancellationToken).ConfigureAwait(false);
-        using var command = new NpgsqlCommand(sql, connection);
+        using var command = new NpgsqlCommand(sql, transaction.Connection, transaction);
         command.Parameters.Add(new NpgsqlParameter("@newStatus", state.ToString().ToLowerInvariant()));
         command.Parameters.Add(new NpgsqlParameter("@orderId", orderId));
 
@@ -50,6 +46,7 @@ public class OrderRepository
     public async Task<IEnumerable<Order>> SearchOrders(
         int pageIndex,
         int pageSize,
+        NpgsqlTransaction transaction,
         CancellationToken cancellationToken,
         long[]? orderIds = null,
         OrderState? state = null,
@@ -61,30 +58,22 @@ public class OrderRepository
                           WHERE 1=1");
 
         if (orderIds is not null && orderIds.Length > 0)
-        {
             sql.Append(" AND order_id = ANY(@orderIds)");
-        }
 
         if (state is not null)
-        {
             sql.Append(" AND order_state = @newStatus::order_state");
-        }
 
         if (!string.IsNullOrEmpty(author))
-        {
             sql.Append(" AND order_created_by = @author");
-        }
 
         sql.Append(@"
                 order by order_created_at desc
                 limit @pageSize offset @offset;");
 
-        using NpgsqlConnection connection = await _dataSource.OpenConnectionAsync(cancellationToken).ConfigureAwait(false);
-
         // the other way to disable CA2100 is to use just string concatenation
         // but StringBuilder is better in this context (to not create new string every time)
         #pragma warning disable CA2100
-        using var command = new NpgsqlCommand(sql.ToString(), connection);
+        using var command = new NpgsqlCommand(sql.ToString(), transaction.Connection, transaction);
         #pragma warning restore CA2100
 
         if (orderIds != null && orderIds.Length > 0)

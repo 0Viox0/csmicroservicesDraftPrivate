@@ -1,5 +1,3 @@
-#pragma warning disable
-
 using FluentMigrator.Runner;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
@@ -15,13 +13,8 @@ using Task3.Dal.RepositoryExtensions;
 var configurationManger = new ConfigurationManager();
 IConfigurationBuilder configurationBuilder = configurationManger;
 
-string projectDirectory = Path.GetFullPath(Path.Combine(AppContext.BaseDirectory, "../../../../Task3"));;
-
-configurationManger
-    .SetBasePath(projectDirectory)
-    .AddJsonFile("externalServiceConnectionInfo.json");
-
 ServiceProvider serviceProvider = new ServiceCollection()
+    .AddConfigurationManagerBasePath(configurationManger)
     .AddExternalServiceOptions(configurationManger)
     .AddDatabaseOptions(configurationManger)
     .AddCustomConfiguration(TimeSpan.FromSeconds(2))
@@ -33,9 +26,11 @@ ServiceProvider serviceProvider = new ServiceCollection()
 
 using IServiceScope scope = serviceProvider.CreateScope();
 
+// Add our custom configuration source
 configurationBuilder
     .Add(scope.ServiceProvider.GetRequiredService<CustomConfigurationProviderSource>());
 
+// Update configuration using ConfigurationUpdateService
 ConfigurationUpdateService configurationUpdateService =
     scope.ServiceProvider.GetRequiredService<ConfigurationUpdateService>();
 await configurationUpdateService.UpdateConfiguration(10, string.Empty, CancellationToken.None).ConfigureAwait(false);
@@ -44,28 +39,6 @@ await configurationUpdateService.UpdateConfiguration(10, string.Empty, Cancellat
 IMigrationRunner runner = scope.ServiceProvider.GetRequiredService<IMigrationRunner>();
 runner.MigrateUp();
 
-// const string connectionString = "Host=localhost;Port=5433;Username=viox;Password=123;Database=hehe";
-// string connectionString = databaseSettings.Value.ConnectionString;
-
-// var datasource = NpgsqlDataSource.Create(connectionString);
-//
-// ServiceProvider serviceProvider = new ServiceCollection()
-//     .AddSingleton(datasource)
-//     .AddRepositories()
-//     .AddBllServices()
-//     .AddFluentMigratorCore()
-//     .ConfigureRunner(rb => rb
-//         .AddPostgres()
-//         .WithGlobalConnectionString(connectionString)
-//         .ScanIn(typeof(CreateProductTable).Assembly).For.Migrations())
-//
-//     // .AddLogging(lb => lb.AddFluentMigratorConsole())
-//     .BuildServiceProvider();
-//
-// using IServiceScope scope = serviceProvider.CreateScope();
-// IMigrationRunner runner = scope.ServiceProvider.GetRequiredService<IMigrationRunner>();
-// runner.MigrateUp();
-//
 //-------------------------------- main functionality tests --------------------------------//
 ProductService productService = scope.ServiceProvider.GetRequiredService<ProductService>();
 OrderService orderService = scope.ServiceProvider.GetRequiredService<OrderService>();
