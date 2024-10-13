@@ -4,15 +4,21 @@ using Task3.Bll.Dtos.OrderDtos;
 using Task3.Bll.Extensions;
 using Task3.Dal.Models;
 using Task3.Dal.Models.Enums;
+using Task3.Dal.Serializators;
 
 namespace Task3.Dal.Repositories;
 
 public class OrderHistoryRepository
 {
+    private readonly IOrderHistoryDataSerializer _orderHistoryDataSerializer;
+
+    public OrderHistoryRepository(IOrderHistoryDataSerializer orderHistoryDataSerializer)
+    {
+        _orderHistoryDataSerializer = orderHistoryDataSerializer;
+    }
+
     public async Task<long> CreateOrderHistory(
-        long orderId,
-        OrderHistoryItemKind orderHistoryItemKind,
-        string payload,
+        OrderHistoryData orderHistoryData,
         NpgsqlTransaction transaction,
         CancellationToken cancellationToken)
     {
@@ -22,10 +28,10 @@ public class OrderHistoryRepository
                     RETURNING order_history_item_id;";
 
         using var command = new NpgsqlCommand(sql, transaction.Connection, transaction);
-        command.Parameters.AddWithValue("@OrderId", orderId);
+        command.Parameters.AddWithValue("@OrderId", orderHistoryData.OrderId);
         command.Parameters.AddWithValue("@CreatedAt", DateTimeOffset.UtcNow);
-        command.Parameters.AddWithValue("@Kind", orderHistoryItemKind.ToString().FromPascalToSnakeCase());
-        command.Parameters.AddWithValue("@Payload", payload);
+        command.Parameters.AddWithValue("@Kind", orderHistoryData.Kind.ToString().FromPascalToSnakeCase());
+        command.Parameters.AddWithValue("@Payload", _orderHistoryDataSerializer.Serialize(orderHistoryData));
 
         return (long)(await command.ExecuteScalarAsync(cancellationToken).ConfigureAwait(false) ?? -1);
     }
@@ -84,7 +90,7 @@ public class OrderHistoryRepository
                     typeof(OrderHistoryItemKind),
                     reader.GetString(3).FromSnakeToPascalCase(),
                     true),
-                Payload = reader.GetString(4),
+                Payload = _orderHistoryDataSerializer.Deserialize(reader.GetString(4)),
             });
         }
 

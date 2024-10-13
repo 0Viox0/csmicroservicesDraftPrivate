@@ -1,4 +1,5 @@
 using Task3.Dal.Models.Enums;
+using Task3.Dal.Serializators;
 
 namespace Task3.Bll.Dtos.OrderDtos;
 
@@ -12,5 +13,5 @@ public class OrderHistoryReturnItemDto
 
     public OrderHistoryItemKind Kind { get; set; }
 
-    public string? Payload { get; set; }
+    public OrderHistoryData? Payload { get; set; }
 }

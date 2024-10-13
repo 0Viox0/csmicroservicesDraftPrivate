@@ -1,11 +1,10 @@
 using Npgsql;
-using System.Data;
-using System.Text.Json;
 using Task3.Bll.Dtos.OrderDtos;
 using Task3.Bll.Mappers;
 using Task3.Dal.Models;
 using Task3.Dal.Models.Enums;
 using Task3.Dal.Repositories;
+using Task3.Dal.Serializators;
 
 namespace Task3.Bll.Services;
 
@@ -43,13 +42,13 @@ public class OrderService
             long orderId = await _orderRepository
                 .CreateOrder(createdBy, transaction, cancellationToken).ConfigureAwait(false);
 
-            await LogOrderHistory(
-                    orderId,
-                    OrderHistoryItemKind.Created,
-                    $"Order created by {createdBy}",
-                    transaction,
-                    cancellationToken)
-                .ConfigureAwait(false);
+            var orderHistoryData =
+                    new OrderHistoryData(
+                        orderId,
+                        OrderHistoryItemKind.Created,
+                        $"Order created by {createdBy}");
+
+            await LogOrderHistory(orderHistoryData, transaction, cancellationToken).ConfigureAwait(false);
 
             await transaction.CommitAsync(cancellationToken).ConfigureAwait(false);
 
@@ -84,13 +83,12 @@ public class OrderService
                 .CreateOrderItem(orderItemCreationDto, transaction, cancellationToken)
                 .ConfigureAwait(false);
 
-            await LogOrderHistory(
-                    orderItemCreationDto.OrderId,
-                    OrderHistoryItemKind.ItemAdded,
-                    $"Product {orderItemCreationDto.ProductId} added to order {orderItemCreationDto.OrderId}. Quantity: {orderItemCreationDto.Quantity}",
-                    transaction,
-                    cancellationToken)
-                .ConfigureAwait(false);
+            var orderHistoryData = new OrderHistoryData(
+                orderItemCreationDto.OrderId,
+                OrderHistoryItemKind.ItemAdded,
+                $"Product {orderItemCreationDto.ProductId} added to order {orderItemCreationDto.OrderId}. Quantity: {orderItemCreationDto.Quantity}");
+
+            await LogOrderHistory(orderHistoryData, transaction, cancellationToken).ConfigureAwait(false);
 
             await transaction.CommitAsync(cancellationToken).ConfigureAwait(false);
         }
@@ -127,13 +125,12 @@ public class OrderService
                 .SoftDeleteItem(orderItem.Id, transaction, cancellationToken)
                 .ConfigureAwait(false);
 
-            await LogOrderHistory(
-                    orderItem.OrderId,
-                    OrderHistoryItemKind.ItemRemoved,
-                    $"Product removed from order {orderItem.OrderId}. Item ID: {orderItemProductRemoveDto.ProductId}",
-                    transaction,
-                    cancellationToken)
-                .ConfigureAwait(false);
+            var orderHistoryData = new OrderHistoryData(
+                orderItem.OrderId,
+                OrderHistoryItemKind.ItemRemoved,
+                $"Product removed from order {orderItem.OrderId}. Item ID: {orderItemProductRemoveDto.ProductId}");
+
+            await LogOrderHistory(orderHistoryData, transaction, cancellationToken).ConfigureAwait(false);
 
             await transaction.CommitAsync(cancellationToken).ConfigureAwait(false);
         }
@@ -156,13 +153,12 @@ public class OrderService
                 .UpdateOrderStatus(orderId, OrderState.Processing, transaction, cancellationToken)
                 .ConfigureAwait(false);
 
-            await LogOrderHistory(
-                    orderId,
-                    OrderHistoryItemKind.StateChanged,
-                    "Order transferred to processing.",
-                    transaction,
-                    cancellationToken)
-                .ConfigureAwait(false);
+            var orderHistoryData = new OrderHistoryData(
+                orderId,
+                OrderHistoryItemKind.StateChanged,
+                "Order transferred to processing.");
+
+            await LogOrderHistory(orderHistoryData, transaction, cancellationToken).ConfigureAwait(false);
 
             await transaction.CommitAsync(cancellationToken).ConfigureAwait(false);
         }
@@ -185,13 +181,12 @@ public class OrderService
                 .UpdateOrderStatus(orderId, OrderState.Completed, transaction, cancellationToken)
                 .ConfigureAwait(false);
 
-            await LogOrderHistory(
-                    orderId,
-                    OrderHistoryItemKind.StateChanged,
-                    "Order fulfilled.",
-                    transaction,
-                    cancellationToken)
-                .ConfigureAwait(false);
+            var orderHistoryData = new OrderHistoryData(
+                orderId,
+                OrderHistoryItemKind.StateChanged,
+                "Order fulfilled.");
+
+            await LogOrderHistory(orderHistoryData, transaction, cancellationToken).ConfigureAwait(false);
 
             await transaction.CommitAsync(cancellationToken).ConfigureAwait(false);
         }
@@ -214,13 +209,12 @@ public class OrderService
                 .UpdateOrderStatus(orderId, OrderState.Cancelled, transaction, cancellationToken)
                 .ConfigureAwait(false);
 
-            await LogOrderHistory(
-                    orderId,
-                    OrderHistoryItemKind.StateChanged,
-                    "Order cancelled.",
-                    transaction,
-                    cancellationToken)
-                .ConfigureAwait(false);
+            var orderHistoryData = new OrderHistoryData(
+                orderId,
+                OrderHistoryItemKind.StateChanged,
+                "Order cancelled.");
+
+            await LogOrderHistory(orderHistoryData, transaction, cancellationToken).ConfigureAwait(false);
 
             await transaction.CommitAsync(cancellationToken).ConfigureAwait(false);
         }
@@ -260,23 +254,12 @@ public class OrderService
     }
 
     private async Task LogOrderHistory(
-        long orderId,
-        OrderHistoryItemKind kind,
-        string payload,
+        OrderHistoryData orderHistoryData,
         NpgsqlTransaction transaction,
         CancellationToken cancellationToken)
     {
-        var orderHistoryData = new
-        {
-            OrderId = orderId,
-            State = kind.ToString(),
-            Description = payload,
-        };
-
-        string jsonFormattedPayload = JsonSerializer.Serialize(orderHistoryData);
-
         await _orderHistoryRepository
-            .CreateOrderHistory(orderId, kind, jsonFormattedPayload, transaction, cancellationToken)
+            .CreateOrderHistory(orderHistoryData, transaction, cancellationToken)
             .ConfigureAwait(false);
     }
 }
