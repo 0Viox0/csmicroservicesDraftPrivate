@@ -22,8 +22,7 @@ public class RefitConfigurationClient : IConfigurationClient
         int pageSize, string? pageToken, CancellationToken cancellationToken)
     {
         ExternalQueryConfigurationsResponse response = await _refitConfigurationClient
-            .GetConfigurationsAsync(pageSize, pageToken, cancellationToken)
-            .ConfigureAwait(false);
+            .GetConfigurationsAsync(pageSize, pageToken, cancellationToken);
 
         return _apiApplicationModelConfigurationMapper
             .ToConfigurationKeyValueCollectionWIthPageToken(response);

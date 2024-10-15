@@ -21,7 +21,7 @@ public class OrderRepository
         using var command = new NpgsqlCommand(sql, transaction.Connection, transaction);
         command.Parameters.Add(new NpgsqlParameter("@createdBy", createdBy));
 
-        return (long)(await command.ExecuteScalarAsync(cancellationToken).ConfigureAwait(false) ?? -1L);
+        return (long)(await command.ExecuteScalarAsync(cancellationToken) ?? -1L);
     }
 
     public async Task UpdateOrderStatus(
@@ -40,7 +40,7 @@ public class OrderRepository
         command.Parameters.Add(new NpgsqlParameter("@newStatus", state.ToString().ToLowerInvariant()));
         command.Parameters.Add(new NpgsqlParameter("@orderId", orderId));
 
-        await command.ExecuteNonQueryAsync(cancellationToken).ConfigureAwait(false);
+        await command.ExecuteNonQueryAsync(cancellationToken);
     }
 
     public async Task<IEnumerable<Order>> SearchOrders(
@@ -97,9 +97,9 @@ public class OrderRepository
 
         var orders = new List<Order>();
 
-        using NpgsqlDataReader reader = await command.ExecuteReaderAsync(cancellationToken).ConfigureAwait(false);
+        using NpgsqlDataReader reader = await command.ExecuteReaderAsync(cancellationToken);
 
-        while (await reader.ReadAsync(cancellationToken).ConfigureAwait(false))
+        while (await reader.ReadAsync(cancellationToken))
         {
             orders.Add(new Order
             {

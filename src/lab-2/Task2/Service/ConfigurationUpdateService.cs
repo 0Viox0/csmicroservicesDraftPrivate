@@ -30,17 +30,16 @@ public class ConfigurationUpdateService : IDisposable
         string pageToken,
         CancellationToken cancellationToken)
     {
-        while (await _periodicTimer.WaitForNextTickAsync(cancellationToken).ConfigureAwait(false))
+        while (await _periodicTimer.WaitForNextTickAsync(cancellationToken))
         {
-            await UpdateConfiguration(pageSize, pageToken, cancellationToken).ConfigureAwait(false);
+            await UpdateConfiguration(pageSize, pageToken, cancellationToken);
         }
     }
 
     public async Task UpdateConfiguration(int pageSize, string pageToken, CancellationToken cancellationToken)
     {
         ConfigurationKeyValueCollectionWIthPageToken response = await _configurationClient
-            .GetConfigurationsAsync(pageSize, pageToken, cancellationToken)
-            .ConfigureAwait(false);
+            .GetConfigurationsAsync(pageSize, pageToken, cancellationToken);
 
         _customConfigurationProvider.UpdateConfiguration(response.ConfigurationKeyValueItems);
     }

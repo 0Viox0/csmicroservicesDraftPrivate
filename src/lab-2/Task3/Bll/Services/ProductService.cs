@@ -21,10 +21,10 @@ public class ProductService
         ProductCreationDto productCreationDto,
         CancellationToken cancellationToken)
     {
-        using NpgsqlConnection connection =
-            await _dataSource.OpenConnectionAsync(cancellationToken).ConfigureAwait(false);
-        using NpgsqlTransaction transaction =
-            await connection.BeginTransactionAsync(cancellationToken).ConfigureAwait(false);
+        await using NpgsqlConnection connection =
+            await _dataSource.OpenConnectionAsync(cancellationToken);
+        await using NpgsqlTransaction transaction =
+            await connection.BeginTransactionAsync(cancellationToken);
 
         try
         {
@@ -38,13 +38,13 @@ public class ProductService
                 productCreationDto.Name,
                 productCreationDto.Price,
                 transaction,
-                cancellationToken).ConfigureAwait(false);
+                cancellationToken);
 
-            await transaction.CommitAsync(cancellationToken).ConfigureAwait(false);
+            await transaction.CommitAsync(cancellationToken);
         }
         catch
         {
-            await transaction.RollbackAsync(cancellationToken).ConfigureAwait(false);
+            await transaction.RollbackAsync(cancellationToken);
             throw;
         }
     }

@@ -23,7 +23,7 @@ public class OrderItemRepository
         command.Parameters.AddWithValue("@ProductId", orderItemCreationDto.ProductId);
         command.Parameters.AddWithValue("@Quantity", orderItemCreationDto.Quantity);
 
-        return (long)(await command.ExecuteScalarAsync(cancellationToken).ConfigureAwait(false) ?? -1);
+        return (long)(await command.ExecuteScalarAsync(cancellationToken) ?? -1);
     }
 
     public async Task SoftDeleteItem(
@@ -40,7 +40,7 @@ public class OrderItemRepository
         using var command = new NpgsqlCommand(sql, transaction.Connection, transaction);
         command.Parameters.AddWithValue("@OrderItemId", orderItemId);
 
-        await command.ExecuteNonQueryAsync(cancellationToken).ConfigureAwait(false);
+        await command.ExecuteNonQueryAsync(cancellationToken);
     }
 
     public async Task<IEnumerable<OrderItem>> SearchOrderItems(
@@ -89,11 +89,11 @@ public class OrderItemRepository
         command.Parameters.AddWithValue("@PageSize", pageSize);
         command.Parameters.AddWithValue("@PageIndex", pageIndex);
 
-        using NpgsqlDataReader reader = await command.ExecuteReaderAsync(cancellationToken).ConfigureAwait(false);
+        using NpgsqlDataReader reader = await command.ExecuteReaderAsync(cancellationToken);
 
         var orderItems = new List<OrderItem>();
 
-        while (await reader.ReadAsync(cancellationToken).ConfigureAwait(false))
+        while (await reader.ReadAsync(cancellationToken))
         {
             orderItems.Add(new OrderItem
             {

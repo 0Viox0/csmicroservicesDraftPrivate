@@ -21,7 +21,7 @@ public class ProductRepository
         command.Parameters.Add(new NpgsqlParameter("@name", name));
         command.Parameters.Add(new NpgsqlParameter("@product_price", productPrice));
 
-        await command.ExecuteNonQueryAsync(cancellationToken).ConfigureAwait(false);
+        await command.ExecuteNonQueryAsync(cancellationToken);
     }
 
     public async Task<IEnumerable<Product>> SearchProduct(
@@ -62,10 +62,10 @@ public class ProductRepository
         if (maxPrice.HasValue)
             command.Parameters.AddWithValue("@maxPrice", maxPrice.Value);
 
-        NpgsqlDataReader reader = await command.ExecuteReaderAsync(cancellationToken).ConfigureAwait(false);
+        NpgsqlDataReader reader = await command.ExecuteReaderAsync(cancellationToken);
         var products = new List<Product>();
 
-        while (await reader.ReadAsync(cancellationToken).ConfigureAwait(false))
+        while (await reader.ReadAsync(cancellationToken))
         {
             products.Add(new Product
             {

@@ -32,15 +32,15 @@ public class OrderService
 
     public async Task<long> CreateOrder(string createdBy, CancellationToken cancellationToken)
     {
-        using NpgsqlConnection connection =
-            await _dataSource.OpenConnectionAsync(cancellationToken).ConfigureAwait(false);
-        using NpgsqlTransaction transaction =
-            await connection.BeginTransactionAsync(cancellationToken).ConfigureAwait(false);
+        await using NpgsqlConnection connection =
+            await _dataSource.OpenConnectionAsync(cancellationToken);
+        await using NpgsqlTransaction transaction =
+            await connection.BeginTransactionAsync(cancellationToken);
 
         try
         {
             long orderId = await _orderRepository
-                .CreateOrder(createdBy, transaction, cancellationToken).ConfigureAwait(false);
+                .CreateOrder(createdBy, transaction, cancellationToken);
 
             var orderHistoryData =
                     new OrderHistoryData(
@@ -48,69 +48,66 @@ public class OrderService
                         OrderHistoryItemKind.Created,
                         $"Order created by {createdBy}");
 
-            await LogOrderHistory(orderHistoryData, transaction, cancellationToken).ConfigureAwait(false);
+            await LogOrderHistory(orderHistoryData, transaction, cancellationToken);
 
-            await transaction.CommitAsync(cancellationToken).ConfigureAwait(false);
+            await transaction.CommitAsync(cancellationToken);
 
             return orderId;
         }
         catch
         {
-            await transaction.RollbackAsync(cancellationToken).ConfigureAwait(false);
+            await transaction.RollbackAsync(cancellationToken);
             throw;
         }
     }
 
     public async Task AddProductToOrder(OrderItemCreationDto orderItemCreationDto, CancellationToken cancellationToken)
     {
-        using NpgsqlConnection connection =
-            await _dataSource.OpenConnectionAsync(cancellationToken).ConfigureAwait(false);
-        using NpgsqlTransaction transaction =
-            await connection.BeginTransactionAsync(cancellationToken).ConfigureAwait(false);
+        await using NpgsqlConnection connection =
+            await _dataSource.OpenConnectionAsync(cancellationToken);
+        await using NpgsqlTransaction transaction =
+            await connection.BeginTransactionAsync(cancellationToken);
 
         try
         {
             Order order =
                 (await _orderRepository
-                    .SearchOrders(0, 1, transaction, cancellationToken, [orderItemCreationDto.OrderId])
-                    .ConfigureAwait(false))
+                    .SearchOrders(0, 1, transaction, cancellationToken, [orderItemCreationDto.OrderId]))
                 .First();
 
             if (order.State != OrderState.Created)
                 return;
 
             await _orderItemRepository
-                .CreateOrderItem(orderItemCreationDto, transaction, cancellationToken)
-                .ConfigureAwait(false);
+                .CreateOrderItem(orderItemCreationDto, transaction, cancellationToken);
 
             var orderHistoryData = new OrderHistoryData(
                 orderItemCreationDto.OrderId,
                 OrderHistoryItemKind.ItemAdded,
                 $"Product {orderItemCreationDto.ProductId} added to order {orderItemCreationDto.OrderId}. Quantity: {orderItemCreationDto.Quantity}");
 
-            await LogOrderHistory(orderHistoryData, transaction, cancellationToken).ConfigureAwait(false);
+            await LogOrderHistory(orderHistoryData, transaction, cancellationToken);
 
-            await transaction.CommitAsync(cancellationToken).ConfigureAwait(false);
+            await transaction.CommitAsync(cancellationToken);
         }
         catch
         {
-            await transaction.RollbackAsync(cancellationToken).ConfigureAwait(false);
+            await transaction.RollbackAsync(cancellationToken);
         }
     }
 
     public async Task RemoveProductFromOrder(OrderItemRemoveDto orderItemProductRemoveDto, CancellationToken cancellationToken)
     {
-        using NpgsqlConnection connection =
-            await _dataSource.OpenConnectionAsync(cancellationToken).ConfigureAwait(false);
-        using NpgsqlTransaction transaction =
-            await connection.BeginTransactionAsync(cancellationToken).ConfigureAwait(false);
+        await using NpgsqlConnection connection =
+            await _dataSource.OpenConnectionAsync(cancellationToken);
+        await using NpgsqlTransaction transaction =
+            await connection.BeginTransactionAsync(cancellationToken);
 
         try
         {
             Order order
                 = (await _orderRepository
-                    .SearchOrders(0, 1, transaction, cancellationToken, [orderItemProductRemoveDto.OrderId])
-                    .ConfigureAwait(false))
+                    .SearchOrders(0, 1, transaction, cancellationToken, [orderItemProductRemoveDto.OrderId]))
                 .First();
 
             if (order is not { State: OrderState.Created })
@@ -118,109 +115,105 @@ public class OrderService
 
             OrderItem orderItem =
                 (await _orderItemRepository
-                    .SearchOrderItems(0, 1, transaction, cancellationToken, orderId: orderItemProductRemoveDto.OrderId, productId: orderItemProductRemoveDto.ProductId)
-                    .ConfigureAwait(false)).First();
+                    .SearchOrderItems(0, 1, transaction, cancellationToken, orderId: orderItemProductRemoveDto.OrderId, productId: orderItemProductRemoveDto.ProductId))
+                .First();
 
             await _orderItemRepository
-                .SoftDeleteItem(orderItem.Id, transaction, cancellationToken)
-                .ConfigureAwait(false);
+                .SoftDeleteItem(orderItem.Id, transaction, cancellationToken);
 
             var orderHistoryData = new OrderHistoryData(
                 orderItem.OrderId,
                 OrderHistoryItemKind.ItemRemoved,
                 $"Product removed from order {orderItem.OrderId}. Item ID: {orderItemProductRemoveDto.ProductId}");
 
-            await LogOrderHistory(orderHistoryData, transaction, cancellationToken).ConfigureAwait(false);
+            await LogOrderHistory(orderHistoryData, transaction, cancellationToken);
 
-            await transaction.CommitAsync(cancellationToken).ConfigureAwait(false);
+            await transaction.CommitAsync(cancellationToken);
         }
         catch
         {
-            await transaction.RollbackAsync(cancellationToken).ConfigureAwait(false);
+            await transaction.RollbackAsync(cancellationToken);
         }
     }
 
     public async Task TransferOrderToProcessing(long orderId, CancellationToken cancellationToken)
     {
-        using NpgsqlConnection connection =
-            await _dataSource.OpenConnectionAsync(cancellationToken).ConfigureAwait(false);
-        using NpgsqlTransaction transaction =
-            await connection.BeginTransactionAsync(cancellationToken).ConfigureAwait(false);
+        await using NpgsqlConnection connection =
+            await _dataSource.OpenConnectionAsync(cancellationToken);
+        await using NpgsqlTransaction transaction =
+            await connection.BeginTransactionAsync(cancellationToken);
 
         try
         {
             await _orderRepository
-                .UpdateOrderStatus(orderId, OrderState.Processing, transaction, cancellationToken)
-                .ConfigureAwait(false);
+                .UpdateOrderStatus(orderId, OrderState.Processing, transaction, cancellationToken);
 
             var orderHistoryData = new OrderHistoryData(
                 orderId,
                 OrderHistoryItemKind.StateChanged,
                 "Order transferred to processing.");
 
-            await LogOrderHistory(orderHistoryData, transaction, cancellationToken).ConfigureAwait(false);
+            await LogOrderHistory(orderHistoryData, transaction, cancellationToken);
 
-            await transaction.CommitAsync(cancellationToken).ConfigureAwait(false);
+            await transaction.CommitAsync(cancellationToken);
         }
         catch
         {
-            await transaction.RollbackAsync(cancellationToken).ConfigureAwait(false);
+            await transaction.RollbackAsync(cancellationToken);
         }
     }
 
     public async Task FulfillOrder(long orderId, CancellationToken cancellationToken)
     {
-        using NpgsqlConnection connection =
-            await _dataSource.OpenConnectionAsync(cancellationToken).ConfigureAwait(false);
-        using NpgsqlTransaction transaction =
-            await connection.BeginTransactionAsync(cancellationToken).ConfigureAwait(false);
+        await using NpgsqlConnection connection =
+            await _dataSource.OpenConnectionAsync(cancellationToken);
+        await using NpgsqlTransaction transaction =
+            await connection.BeginTransactionAsync(cancellationToken);
 
         try
         {
             await _orderRepository
-                .UpdateOrderStatus(orderId, OrderState.Completed, transaction, cancellationToken)
-                .ConfigureAwait(false);
+                .UpdateOrderStatus(orderId, OrderState.Completed, transaction, cancellationToken);
 
             var orderHistoryData = new OrderHistoryData(
                 orderId,
                 OrderHistoryItemKind.StateChanged,
                 "Order fulfilled.");
 
-            await LogOrderHistory(orderHistoryData, transaction, cancellationToken).ConfigureAwait(false);
+            await LogOrderHistory(orderHistoryData, transaction, cancellationToken);
 
-            await transaction.CommitAsync(cancellationToken).ConfigureAwait(false);
+            await transaction.CommitAsync(cancellationToken);
         }
         catch
         {
-            await transaction.RollbackAsync(cancellationToken).ConfigureAwait(false);
+            await transaction.RollbackAsync(cancellationToken);
         }
     }
 
     public async Task CancelOrder(long orderId, CancellationToken cancellationToken)
     {
-        using NpgsqlConnection connection =
-            await _dataSource.OpenConnectionAsync(cancellationToken).ConfigureAwait(false);
-        using NpgsqlTransaction transaction =
-            await connection.BeginTransactionAsync(cancellationToken).ConfigureAwait(false);
+        await using NpgsqlConnection connection =
+            await _dataSource.OpenConnectionAsync(cancellationToken);
+        await using NpgsqlTransaction transaction =
+            await connection.BeginTransactionAsync(cancellationToken);
 
         try
         {
             await _orderRepository
-                .UpdateOrderStatus(orderId, OrderState.Cancelled, transaction, cancellationToken)
-                .ConfigureAwait(false);
+                .UpdateOrderStatus(orderId, OrderState.Cancelled, transaction, cancellationToken);
 
             var orderHistoryData = new OrderHistoryData(
                 orderId,
                 OrderHistoryItemKind.StateChanged,
                 "Order cancelled.");
 
-            await LogOrderHistory(orderHistoryData, transaction, cancellationToken).ConfigureAwait(false);
+            await LogOrderHistory(orderHistoryData, transaction, cancellationToken);
 
-            await transaction.CommitAsync(cancellationToken).ConfigureAwait(false);
+            await transaction.CommitAsync(cancellationToken);
         }
         catch
         {
-            await transaction.RollbackAsync(cancellationToken).ConfigureAwait(false);
+            await transaction.RollbackAsync(cancellationToken);
         }
     }
 
@@ -228,27 +221,26 @@ public class OrderService
         OrderHistoryItemSearchDto orderHistoryItemSearchDto,
         CancellationToken cancellationToken)
     {
-        using NpgsqlConnection connection =
-            await _dataSource.OpenConnectionAsync(cancellationToken).ConfigureAwait(false);
-        using NpgsqlTransaction transaction =
-            await connection.BeginTransactionAsync(cancellationToken).ConfigureAwait(false);
+        await using NpgsqlConnection connection =
+            await _dataSource.OpenConnectionAsync(cancellationToken);
+        await using NpgsqlTransaction transaction =
+            await connection.BeginTransactionAsync(cancellationToken);
 
         try
         {
             var orderHistoryReturnItems =
                 (await _orderHistoryRepository
-                    .GetOrderHistory(orderHistoryItemSearchDto, transaction, cancellationToken)
-                    .ConfigureAwait(false))
+                    .GetOrderHistory(orderHistoryItemSearchDto, transaction, cancellationToken))
                 .Select(_orderHistoryMapper.ToOrderHistoryReturnItemDto)
                 .ToList();
 
-            await transaction.CommitAsync(cancellationToken).ConfigureAwait(false);
+            await transaction.CommitAsync(cancellationToken);
 
             return orderHistoryReturnItems;
         }
         catch
         {
-            await transaction.RollbackAsync(cancellationToken).ConfigureAwait(false);
+            await transaction.RollbackAsync(cancellationToken);
             return Enumerable.Empty<OrderHistoryReturnItemDto>();
         }
     }
@@ -259,7 +251,6 @@ public class OrderService
         CancellationToken cancellationToken)
     {
         await _orderHistoryRepository
-            .CreateOrderHistory(orderHistoryData, transaction, cancellationToken)
-            .ConfigureAwait(false);
+            .CreateOrderHistory(orderHistoryData, transaction, cancellationToken);
     }
 }

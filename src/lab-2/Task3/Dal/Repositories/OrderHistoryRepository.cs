@@ -33,7 +33,7 @@ public class OrderHistoryRepository
         command.Parameters.AddWithValue("@Kind", orderHistoryData.Kind.ToString().FromPascalToSnakeCase());
         command.Parameters.AddWithValue("@Payload", _orderHistoryDataSerializer.Serialize(orderHistoryData));
 
-        return (long)(await command.ExecuteScalarAsync(cancellationToken).ConfigureAwait(false) ?? -1);
+        return (long)(await command.ExecuteScalarAsync(cancellationToken) ?? -1);
     }
 
     public async Task<IEnumerable<OrderHistoryItem>> GetOrderHistory(
@@ -75,11 +75,11 @@ public class OrderHistoryRepository
         command.Parameters.AddWithValue("@PageSize", orderHistoryItemSearchDto.PageSize);
         command.Parameters.AddWithValue("@Offset", orderHistoryItemSearchDto.PageIndex * orderHistoryItemSearchDto.PageSize);
 
-        using NpgsqlDataReader reader = await command.ExecuteReaderAsync(cancellationToken).ConfigureAwait(false);
+        using NpgsqlDataReader reader = await command.ExecuteReaderAsync(cancellationToken);
 
         var orderHistories = new List<OrderHistoryItem>();
 
-        while (await reader.ReadAsync(cancellationToken).ConfigureAwait(false))
+        while (await reader.ReadAsync(cancellationToken))
         {
             orderHistories.Add(new OrderHistoryItem
             {

@@ -24,14 +24,13 @@ public class HttpClientConfigurationClient : IConfigurationClient
     {
         string query = $"configurations?pageSize={pageSize}&pageToken={pageToken}";
 
-        HttpResponseMessage response = await _httpClient.GetAsync(query, cancellationToken).ConfigureAwait(false);
+        HttpResponseMessage response = await _httpClient.GetAsync(query, cancellationToken);
 
         response.EnsureSuccessStatusCode();
 
         ExternalQueryConfigurationsResponse? configurationsResponse =
             await response.Content
-                .ReadFromJsonAsync<ExternalQueryConfigurationsResponse>(cancellationToken)
-                .ConfigureAwait(false);
+                .ReadFromJsonAsync<ExternalQueryConfigurationsResponse>(cancellationToken);
 
         if (configurationsResponse is null)
             throw new Exception("No data received");
