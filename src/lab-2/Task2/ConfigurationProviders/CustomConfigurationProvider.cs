@@ -1,11 +1,11 @@
 using Microsoft.Extensions.Configuration;
-using Task1.Models;
+using Task1.Models.ApplicationConfigurationModels;
 
 namespace Task2.ConfigurationProviders;
 
 public class CustomConfigurationProvider : ConfigurationProvider
 {
-    public void UpdateConfiguration(IEnumerable<ConfigurationItemDto> items)
+    public void UpdateConfiguration(IEnumerable<ConfigurationKeyValueItem> items)
     {
         var itemList = items.ToList();
         bool configurationChanged = false;
@@ -20,7 +20,7 @@ public class CustomConfigurationProvider : ConfigurationProvider
         }
         else
         {
-            foreach (ConfigurationItemDto keyValuePair in itemList)
+            foreach (ConfigurationKeyValueItem? keyValuePair in itemList)
             {
                 if (!Data.TryGetValue($"DatabaseSettings:{keyValuePair.Key}", out string? existingValue)
                     || existingValue != keyValuePair.Value)

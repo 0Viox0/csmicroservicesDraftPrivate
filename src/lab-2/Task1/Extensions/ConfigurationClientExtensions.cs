@@ -4,6 +4,7 @@ using Refit;
 using Task1.ConfigurationModels;
 using Task1.Implementations;
 using Task1.Interfaces;
+using Task1.Mappers;
 
 namespace Task1.Extensions;
 
@@ -38,5 +39,12 @@ public static class ConfigurationClientExtensions
         services.AddTransient<IConfigurationClient, RefitConfigurationClient>();
 
         return services;
+    }
+
+    public static IServiceCollection AddApiApplicationModelMappers(this IServiceCollection serviceCollection)
+    {
+        serviceCollection.AddScoped<ApiApplicationModelConfigurationMapper>();
+
+        return serviceCollection;
     }
 }

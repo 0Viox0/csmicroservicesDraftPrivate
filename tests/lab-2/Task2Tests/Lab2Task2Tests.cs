@@ -1,6 +1,6 @@
 using FluentAssertions;
 using Microsoft.Extensions.Primitives;
-using Task1.Models;
+using Task1.Models.ApplicationConfigurationModels;
 using Task2.ConfigurationProviders;
 
 namespace Task2Tests;
@@ -17,7 +17,7 @@ public class Lab2Task2Tests
     [Fact]
     public void Scenario1_ShouldAddSingleKeyValuePairAndUpdateConfiguration()
     {
-        var items = new List<ConfigurationItemDto>
+        var items = new List<ConfigurationKeyValueItem>
         {
             new("key1", "value1"),
         };
@@ -34,7 +34,7 @@ public class Lab2Task2Tests
     [Fact]
     public void Scenario2_ShouldNotCallUpdateWhenSameConfigurationPassed()
     {
-        var items = new List<ConfigurationItemDto>
+        var items = new List<ConfigurationKeyValueItem>
         {
             new("key1", "value1"),
         };
@@ -53,14 +53,14 @@ public class Lab2Task2Tests
     [Fact]
     public void Scenario3_ShouldUpdateKeyValueAndReloadConfiguration()
     {
-        var initialItems = new List<ConfigurationItemDto>
+        var initialItems = new List<ConfigurationKeyValueItem>
         {
             new("key1", "value1"),
         };
 
         _provider.UpdateConfiguration(initialItems);
 
-        var updatedItems = new List<ConfigurationItemDto>
+        var updatedItems = new List<ConfigurationKeyValueItem>
         {
             new("key1", "value2"),
         };
@@ -77,7 +77,7 @@ public class Lab2Task2Tests
     [Fact]
     public void Scenario4_ShouldClearConfigurationWhenPassedEmptyList()
     {
-        var initialItems = new List<ConfigurationItemDto>
+        var initialItems = new List<ConfigurationKeyValueItem>
         {
             new("key1", "value1"),
         };

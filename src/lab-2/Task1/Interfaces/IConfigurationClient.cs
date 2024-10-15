@@ -1,9 +1,9 @@
-using Task1.Models;
+using Task1.Models.ApplicationConfigurationModels;
 
 namespace Task1.Interfaces;
 
 public interface IConfigurationClient
 {
-    Task<QueryConfigurationsResponse> GetConfigurationsAsync(
+    Task<ConfigurationKeyValueCollectionWIthPageToken> GetConfigurationsAsync(
         int pageSize, string? pageToken, CancellationToken cancellationToken);
 }

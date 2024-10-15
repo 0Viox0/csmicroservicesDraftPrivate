@@ -12,7 +12,7 @@ public static class CustomConfigurationExtensions
         this IServiceCollection services,
         TimeSpan updateInterval)
     {
-        services.AddRefitConfigurationClient();
+        services.AddRefitConfigurationClient().AddApiApplicationModelMappers();
         services.AddSingleton<CustomConfigurationProvider>();
         services.AddSingleton<CustomConfigurationProviderSource>();
 

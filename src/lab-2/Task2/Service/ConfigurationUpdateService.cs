@@ -1,5 +1,5 @@
 using Task1.Interfaces;
-using Task1.Models;
+using Task1.Models.ApplicationConfigurationModels;
 using Task2.ConfigurationProviders;
 
 namespace Task2.Service;
@@ -38,10 +38,10 @@ public class ConfigurationUpdateService : IDisposable
 
     public async Task UpdateConfiguration(int pageSize, string pageToken, CancellationToken cancellationToken)
     {
-        QueryConfigurationsResponse response = await _configurationClient
+        ConfigurationKeyValueCollectionWIthPageToken response = await _configurationClient
             .GetConfigurationsAsync(pageSize, pageToken, cancellationToken)
             .ConfigureAwait(false);
 
-        _customConfigurationProvider.UpdateConfiguration(response.Items);
+        _customConfigurationProvider.UpdateConfiguration(response.ConfigurationKeyValueItems);
     }
 }

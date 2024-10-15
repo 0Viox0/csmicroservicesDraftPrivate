@@ -1,19 +1,25 @@
 using System.Net.Http.Json;
 using Task1.Interfaces;
-using Task1.Models;
+using Task1.Mappers;
+using Task1.Models.ApplicationConfigurationModels;
+using Task1.Models.ClientResponseModels;
 
 namespace Task1.Implementations;
 
 public class HttpClientConfigurationClient : IConfigurationClient
 {
     private readonly HttpClient _httpClient;
+    private readonly ApiApplicationModelConfigurationMapper _apiApplicationModelConfigurationMapper;
 
-    public HttpClientConfigurationClient(IHttpClientFactory httpClientFactory)
+    public HttpClientConfigurationClient(
+        IHttpClientFactory httpClientFactory,
+        ApiApplicationModelConfigurationMapper apiApplicationModelConfigurationMapper)
     {
+        _apiApplicationModelConfigurationMapper = apiApplicationModelConfigurationMapper;
         _httpClient = httpClientFactory.CreateClient("ConfigurationServiceClient");
     }
 
-    public async Task<QueryConfigurationsResponse> GetConfigurationsAsync(
+    public async Task<ConfigurationKeyValueCollectionWIthPageToken> GetConfigurationsAsync(
         int pageSize, string? pageToken, CancellationToken cancellationToken)
     {
         string query = $"configurations?pageSize={pageSize}&pageToken={pageToken}";
@@ -22,11 +28,15 @@ public class HttpClientConfigurationClient : IConfigurationClient
 
         response.EnsureSuccessStatusCode();
 
-        QueryConfigurationsResponse? configuration =
+        ExternalQueryConfigurationsResponse? configurationsResponse =
             await response.Content
-                .ReadFromJsonAsync<QueryConfigurationsResponse>(cancellationToken)
+                .ReadFromJsonAsync<ExternalQueryConfigurationsResponse>(cancellationToken)
                 .ConfigureAwait(false);
 
-        return configuration ?? throw new Exception("No data received");
+        if (configurationsResponse is null)
+            throw new Exception("No data received");
+
+        return _apiApplicationModelConfigurationMapper
+            .ToConfigurationKeyValueCollectionWIthPageToken(configurationsResponse);
     }
 }
