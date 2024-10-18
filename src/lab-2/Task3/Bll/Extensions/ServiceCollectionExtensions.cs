@@ -7,6 +7,7 @@ using Task1.ConfigurationModels;
 using Task3.Bll.Mappers;
 using Task3.Bll.Services;
 using Task3.Dal.Migrations;
+using Task3.Dal.Models.Enums;
 
 namespace Task3.Bll.Extensions;
 
@@ -49,7 +50,12 @@ public static class ServiceCollectionExtensions
             .AddSingleton(sp =>
             {
                 DatabaseSettings dbSettings = sp.GetRequiredService<IOptions<DatabaseSettings>>().Value;
-                return NpgsqlDataSource.Create(dbSettings.ConnectionString);
+                var sourceBuilder = new NpgsqlDataSourceBuilder(dbSettings.ConnectionString);
+
+                sourceBuilder.MapEnum<OrderHistoryItemKind>();
+                sourceBuilder.MapEnum<OrderState>();
+
+                return sourceBuilder.Build();
             });
 
         return services;

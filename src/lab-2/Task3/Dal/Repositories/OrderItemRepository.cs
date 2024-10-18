@@ -1,5 +1,4 @@
 using Npgsql;
-using System.Text;
 using Task3.Bll.Dtos.OrderDtos;
 using Task3.Dal.Models;
 
@@ -59,42 +58,36 @@ public class OrderItemRepository
         bool? isDeleted = null,
         int? quantity = null)
     {
-        var sql = new StringBuilder("""
-                                    select order_item_id, order_id, product_id, order_item_quantity, order_item_deleted
-                                    from order_items
-                                    where 1=1
-                                    """);
+        string sql = """
+                  select order_item_id, order_id, product_id, order_item_quantity, order_item_deleted
+                  from order_items
+                  where (@OrderId is null or order_id = @OrderId)
+                  and (@ProductId is null or product_id = @ProductId)
+                  and (@IsDeleted is null or order_item_deleted = @IsDeleted)
+                  and (@Quantity is null or order_item_quantity = @Quantity)
+                  order by order_item_quantity
+                  limit @PageSize offset @PageIndex
+                  """;
 
-        if (orderId.HasValue)
-            sql.Append(" AND order_id = @OrderId");
-        if (productId.HasValue)
-            sql.Append(" AND product_id = @ProductId");
-        if (isDeleted.HasValue)
-            sql.Append(" AND order_item_deleted = @IsDeleted");
-        if (quantity.HasValue)
-            sql.Append(" AND quantity = @Quantity");
-
-        sql.Append(" order by order_item_quantity");
-        sql.Append(" limit @PageSize offset @PageIndex");
-
-        // the other way to disable CA2100 is to use just string concatenation
-        // but StringBuilder is better in this context (to not create new string every time)
-        #pragma warning disable CA2100
         await using NpgsqlConnection connection = await _dataSource.OpenConnectionAsync(cancellationToken);
-        await using var command = new NpgsqlCommand(sql.ToString(), connection);
-        #pragma warning restore CA2100
+        await using var command = new NpgsqlCommand(sql, connection);
 
-        if (orderId.HasValue)
-            command.Parameters.AddWithValue("@OrderId", orderId);
-        if (productId.HasValue)
-            command.Parameters.AddWithValue("@ProductId", productId);
-        if (isDeleted.HasValue)
-            command.Parameters.AddWithValue("@IsDeleted", isDeleted);
-        if (quantity.HasValue)
-            command.Parameters.AddWithValue("@Quantity", quantity);
-
-        command.Parameters.AddWithValue("@PageSize", pageSize);
-        command.Parameters.AddWithValue("@PageIndex", pageIndex);
+        command.Parameters.Add(new NpgsqlParameter("@OrderId", orderId));
+        command.Parameters.Add(new NpgsqlParameter("@ProductId", productId));
+        command.Parameters.Add(new NpgsqlParameter
+        {
+            ParameterName = "@IsDeleted",
+            Value = isDeleted ?? (object)DBNull.Value,
+            DataTypeName = "boolean",
+        });
+        command.Parameters.Add(new NpgsqlParameter
+        {
+            ParameterName = "@Quantity",
+            Value = quantity ?? (object)DBNull.Value,
+            DataTypeName = "integer",
+        });
+        command.Parameters.Add(new NpgsqlParameter("@PageSize", pageSize));
+        command.Parameters.Add(new NpgsqlParameter("@PageIndex", pageIndex));
 
         await using NpgsqlDataReader reader = await command.ExecuteReaderAsync(cancellationToken);
 

@@ -52,9 +52,9 @@ public class OrderService
         using var scope = new TransactionScope(TransactionScopeAsyncFlowOption.Enabled);
 
         Order order =
-            (await _orderRepository
-                .SearchOrders(0, 1,  cancellationToken, [orderItemCreationDto.OrderId]))
-            .First();
+            await _orderRepository
+                .SearchOrders(0, 1,  cancellationToken, [orderItemCreationDto.OrderId])
+                .FirstAsync(cancellationToken);
 
         if (order.State != OrderState.Created)
             return;
@@ -76,10 +76,10 @@ public class OrderService
     {
         using var scope = new TransactionScope(TransactionScopeAsyncFlowOption.Enabled);
 
-        Order order
-            = (await _orderRepository
-                .SearchOrders(0, 1, cancellationToken, [orderItemProductRemoveDto.OrderId]))
-            .First();
+        Order order =
+            await _orderRepository
+                .SearchOrders(0, 1, cancellationToken, [orderItemProductRemoveDto.OrderId])
+                .FirstAsync(cancellationToken);
 
         if (order is not { State: OrderState.Created })
             return;

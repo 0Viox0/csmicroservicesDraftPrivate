@@ -1,5 +1,4 @@
 using Npgsql;
-using System.Text;
 using Task3.Dal.Models;
 
 namespace Task3.Dal.Repositories;
@@ -39,35 +38,25 @@ public class ProductRepository
         decimal? maxPrice = null,
         decimal? minPrice = null)
     {
-        var sql = new StringBuilder("SELECT * FROM products WHERE 1=1");
+        string sql = """
+                     SELECT * 
+                     FROM products
+                     WHERE
+                     (@nameSubstring IS NULL OR product_name ILIKE '%' || @nameSubstring || '%')
+                     AND (@minPrice IS NULL OR product_price >= @minPrice)
+                     AND (@maxPrice IS NULL OR product_price <= @maxPrice)
+                     ORDER BY product_id
+                     LIMIT @pageSize OFFSET @pageIndex
+                     """;
 
-        if (!string.IsNullOrEmpty(nameSubstring))
-            sql.Append(" AND product_name ILIKE '%' || @nameSubstring || '%'");
-
-        if (minPrice.HasValue)
-            sql.Append(" AND product_price >= @minPrice");
-
-        if (maxPrice.HasValue)
-            sql.Append(" AND product_price <= @maxPrice");
-
-        sql.Append(" ORDER BY product_id LIMIT @pageSize OFFSET @pageIndex");
-
-        // the other way to disable CA2100 is to use just string concatenation
-        // but StringBuilder is better in this context (to not create new string every time)
-        #pragma warning disable CA2100
         await using NpgsqlConnection connection = await _dataSource.OpenConnectionAsync(cancellationToken);
-        await using var command = new NpgsqlCommand(sql.ToString(), connection);
-        #pragma warning restore CA2100
+        await using var command = new NpgsqlCommand(sql, connection);
 
-        command.Parameters.AddWithValue("@pageSize", pageSize);
-        command.Parameters.AddWithValue("@pageIndex", pageIndex * pageSize);
-
-        if (!string.IsNullOrEmpty(nameSubstring))
-            command.Parameters.AddWithValue("@nameSubstring", nameSubstring);
-        if (minPrice.HasValue)
-            command.Parameters.AddWithValue("@minPrice", minPrice.Value);
-        if (maxPrice.HasValue)
-            command.Parameters.AddWithValue("@maxPrice", maxPrice.Value);
+        command.Parameters.Add(new NpgsqlParameter("@pageSize", pageSize));
+        command.Parameters.Add(new NpgsqlParameter("@pageIndex", pageIndex * pageSize));
+        command.Parameters.Add(new NpgsqlParameter("@nameSubstring", nameSubstring));
+        command.Parameters.Add(new NpgsqlParameter("@minPrice", minPrice));
+        command.Parameters.Add(new NpgsqlParameter("@maxPrice", maxPrice));
 
         await using NpgsqlDataReader reader = await command.ExecuteReaderAsync(cancellationToken);
         var products = new List<Product>();

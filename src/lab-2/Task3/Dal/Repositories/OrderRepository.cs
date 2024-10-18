@@ -1,5 +1,5 @@
 using Npgsql;
-using System.Text;
+using System.Runtime.CompilerServices;
 using Task3.Dal.Models;
 using Task3.Dal.Models.Enums;
 
@@ -38,85 +38,66 @@ public class OrderRepository
     {
         string sql = """
                      UPDATE orders SET
-                     order_state = @newStatus::order_state
+                     order_state = @newStatus
                      WHERE order_id = @orderId
                      """;
 
         await using NpgsqlConnection connection = await _dataSource.OpenConnectionAsync(cancellationToken);
         await using var command = new NpgsqlCommand(sql, connection);
-        command.Parameters.Add(new NpgsqlParameter("@newStatus", state.ToString().ToLowerInvariant()));
+        command.Parameters.Add(new NpgsqlParameter("@newStatus", state));
         command.Parameters.Add(new NpgsqlParameter("@orderId", orderId));
 
         await command.ExecuteNonQueryAsync(cancellationToken);
     }
 
-    public async Task<IEnumerable<Order>> SearchOrders(
+    public async IAsyncEnumerable<Order> SearchOrders(
         int pageIndex,
         int pageSize,
-        CancellationToken cancellationToken,
+        [EnumeratorCancellation] CancellationToken cancellationToken,
         long[]? orderIds = null,
         OrderState? state = null,
         string? author = null)
     {
-        var sql = new StringBuilder(@"
-                          SELECT order_id, order_state, order_created_at, order_created_by
-                          FROM orders
-                          WHERE 1=1");
+        string sql = """
+                     SELECT order_id, order_state, order_created_at, order_created_by
+                     FROM orders
+                     WHERE (@orderIds is null or order_id = ANY(@orderIds))
+                     AND (@newStatus is null or order_state = @newStatus)
+                     AND (@author is null or order_created_by = @author)
+                     order by order_created_at desc
+                     limit @pageSize offset @offset;
+                     """;
 
-        if (orderIds is not null && orderIds.Length > 0)
-            sql.Append(" AND order_id = ANY(@orderIds)");
-
-        if (state is not null)
-            sql.Append(" AND order_state = @newStatus::order_state");
-
-        if (!string.IsNullOrEmpty(author))
-            sql.Append(" AND order_created_by = @author");
-
-        sql.Append(@"
-                order by order_created_at desc
-                limit @pageSize offset @offset;");
-
-        // the other way to disable CA2100 is to use just string concatenation
-        // but StringBuilder is better in this context (to not create new string every time)
-        #pragma warning disable CA2100
         await using NpgsqlConnection connection = await _dataSource.OpenConnectionAsync(cancellationToken);
-        await using var command = new NpgsqlCommand(sql.ToString(), connection);
-        #pragma warning restore CA2100
+        await using var command = new NpgsqlCommand(sql, connection);
 
-        if (orderIds != null && orderIds.Length > 0)
+        command.Parameters.Add(new NpgsqlParameter("@orderIds", orderIds));
+        command.Parameters.Add(new NpgsqlParameter
         {
-            command.Parameters.AddWithValue("@orderIds", orderIds);
-        }
-
-        if (state is not null)
+            ParameterName = "@newStatus",
+            Value = state ?? (object)DBNull.Value,
+            DataTypeName = "order_state",
+        });
+        command.Parameters.Add(new NpgsqlParameter
         {
-            string stateString = state.ToString()?.ToLowerInvariant() ?? "this will never happen bad analyzer 0_0";
-            command.Parameters.AddWithValue("@newStatus", stateString);
-        }
-
-        if (!string.IsNullOrEmpty(author))
-        {
-            command.Parameters.AddWithValue("@author", author);
-        }
-
-        command.Parameters.AddWithValue("@offset", pageIndex * pageSize);
-        command.Parameters.AddWithValue("@pageSize", pageSize);
-
-        var orders = new List<Order>();
+            ParameterName = "@author",
+            Value = author ?? (object)DBNull.Value,
+            DataTypeName = "text",
+        });
+        command.Parameters.Add(new NpgsqlParameter("@offset", pageIndex * pageSize));
+        command.Parameters.Add(new NpgsqlParameter("@pageSize", pageSize));
 
         await using NpgsqlDataReader reader = await command.ExecuteReaderAsync(cancellationToken);
 
         while (await reader.ReadAsync(cancellationToken))
         {
-            orders.Add(new Order
+            yield return new Order
             {
                 Id = reader.GetInt32(0),
-                State = (OrderState)Enum.Parse(typeof(OrderState), reader.GetString(1), true),
+                State = reader.GetFieldValue<OrderState>(1),
                 CreatedAt = reader.GetDateTime(2),
                 CreatedBy = reader.GetString(3),
-            });
+            };
         }
-
-        return orders;
     }
 }
