@@ -26,7 +26,8 @@ public static class ServiceCollectionExtensions
         this IServiceCollection services,
         IConfiguration configuration)
     {
-        services.Configure<DatabaseSettings>(configuration.GetSection("DatabaseSettings"));
+        services.AddOptions<DatabaseSettings>()
+            .Bind(configuration.GetSection("DatabaseSettings"));
 
         return services;
     }
@@ -65,7 +66,8 @@ public static class ServiceCollectionExtensions
         this IServiceCollection services,
         IConfiguration configuration)
     {
-        services.Configure<ExternalConnectionInfo>(configuration.GetSection(nameof(ExternalConnectionInfo)));
+        services.AddOptions<ExternalConnectionInfo>()
+            .Bind(configuration.GetSection(nameof(ExternalConnectionInfo)));
 
         return services;
     }
