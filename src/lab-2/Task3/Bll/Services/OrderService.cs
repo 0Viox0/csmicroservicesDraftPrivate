@@ -85,9 +85,9 @@ public class OrderService
             return;
 
         OrderItem orderItem =
-            (await _orderItemRepository
-                .SearchOrderItems(0, 1, cancellationToken, orderId: orderItemProductRemoveDto.OrderId, productId: orderItemProductRemoveDto.ProductId))
-            .First();
+            await _orderItemRepository
+                .SearchOrderItems(0, 1, cancellationToken, orderId: orderItemProductRemoveDto.OrderId, productId: orderItemProductRemoveDto.ProductId)
+                .FirstAsync(cancellationToken: cancellationToken);
 
         await _orderItemRepository
             .SoftDeleteItem(orderItem.Id, cancellationToken);

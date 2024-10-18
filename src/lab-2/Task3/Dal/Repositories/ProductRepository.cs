@@ -1,4 +1,5 @@
 using Npgsql;
+using System.Runtime.CompilerServices;
 using Task3.Dal.Models;
 
 namespace Task3.Dal.Repositories;
@@ -30,10 +31,10 @@ public class ProductRepository
         await command.ExecuteNonQueryAsync(cancellationToken);
     }
 
-    public async Task<IEnumerable<Product>> SearchProduct(
+    public async IAsyncEnumerable<Product> SearchProduct(
         int pageIndex,
         int pageSize,
-        CancellationToken cancellationToken,
+        [EnumeratorCancellation] CancellationToken cancellationToken,
         string? nameSubstring = null,
         decimal? maxPrice = null,
         decimal? minPrice = null)
@@ -59,18 +60,14 @@ public class ProductRepository
         command.Parameters.Add(new NpgsqlParameter("@maxPrice", maxPrice));
 
         await using NpgsqlDataReader reader = await command.ExecuteReaderAsync(cancellationToken);
-        var products = new List<Product>();
-
         while (await reader.ReadAsync(cancellationToken))
         {
-            products.Add(new Product
+            yield return new Product
             {
                 Id = reader.GetInt32(0),
                 Name = reader.GetString(1),
                 Price = reader.GetDecimal(2),
-            });
+            };
         }
-
-        return products;
     }
 }

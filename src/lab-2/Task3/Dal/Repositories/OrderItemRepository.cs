@@ -1,4 +1,5 @@
 using Npgsql;
+using System.Runtime.CompilerServices;
 using Task3.Bll.Dtos.OrderDtos;
 using Task3.Dal.Models;
 
@@ -49,10 +50,10 @@ public class OrderItemRepository
         await command.ExecuteNonQueryAsync(cancellationToken);
     }
 
-    public async Task<IEnumerable<OrderItem>> SearchOrderItems(
+    public async IAsyncEnumerable<OrderItem> SearchOrderItems(
         int pageIndex,
         int pageSize,
-        CancellationToken cancellationToken,
+        [EnumeratorCancellation] CancellationToken cancellationToken,
         long? orderId = null,
         long? productId = null,
         bool? isDeleted = null,
@@ -91,20 +92,16 @@ public class OrderItemRepository
 
         await using NpgsqlDataReader reader = await command.ExecuteReaderAsync(cancellationToken);
 
-        var orderItems = new List<OrderItem>();
-
         while (await reader.ReadAsync(cancellationToken))
         {
-            orderItems.Add(new OrderItem
+            yield return new OrderItem
             {
                 Id = reader.GetInt32(0),
                 OrderId = reader.GetInt32(1),
                 ProductId = reader.GetInt32(2),
                 ItemQuantity = reader.GetInt32(3),
                 IsOrderItemDeleted = reader.GetBoolean(4),
-            });
+            };
         }
-
-        return orderItems;
     }
 }
