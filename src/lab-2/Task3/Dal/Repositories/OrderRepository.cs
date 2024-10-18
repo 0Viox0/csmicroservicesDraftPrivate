@@ -7,9 +7,15 @@ namespace Task3.Dal.Repositories;
 
 public class OrderRepository
 {
+    private readonly NpgsqlDataSource _dataSource;
+
+    public OrderRepository(NpgsqlDataSource dataSource)
+    {
+        _dataSource = dataSource;
+    }
+
     public async Task<long> CreateOrder(
         string createdBy,
-        NpgsqlTransaction transaction,
         CancellationToken cancellationToken)
     {
         string sql = """
@@ -18,7 +24,8 @@ public class OrderRepository
                      RETURNING order_id
                      """;
 
-        using var command = new NpgsqlCommand(sql, transaction.Connection, transaction);
+        await using NpgsqlConnection connection = await _dataSource.OpenConnectionAsync(cancellationToken);
+        await using var command = new NpgsqlCommand(sql, connection);
         command.Parameters.Add(new NpgsqlParameter("@createdBy", createdBy));
 
         return (long)(await command.ExecuteScalarAsync(cancellationToken) ?? -1L);
@@ -27,7 +34,6 @@ public class OrderRepository
     public async Task UpdateOrderStatus(
         long orderId,
         OrderState state,
-        NpgsqlTransaction transaction,
         CancellationToken cancellationToken)
     {
         string sql = """
@@ -36,7 +42,8 @@ public class OrderRepository
                      WHERE order_id = @orderId
                      """;
 
-        using var command = new NpgsqlCommand(sql, transaction.Connection, transaction);
+        await using NpgsqlConnection connection = await _dataSource.OpenConnectionAsync(cancellationToken);
+        await using var command = new NpgsqlCommand(sql, connection);
         command.Parameters.Add(new NpgsqlParameter("@newStatus", state.ToString().ToLowerInvariant()));
         command.Parameters.Add(new NpgsqlParameter("@orderId", orderId));
 
@@ -46,7 +53,6 @@ public class OrderRepository
     public async Task<IEnumerable<Order>> SearchOrders(
         int pageIndex,
         int pageSize,
-        NpgsqlTransaction transaction,
         CancellationToken cancellationToken,
         long[]? orderIds = null,
         OrderState? state = null,
@@ -73,7 +79,8 @@ public class OrderRepository
         // the other way to disable CA2100 is to use just string concatenation
         // but StringBuilder is better in this context (to not create new string every time)
         #pragma warning disable CA2100
-        using var command = new NpgsqlCommand(sql.ToString(), transaction.Connection, transaction);
+        await using NpgsqlConnection connection = await _dataSource.OpenConnectionAsync(cancellationToken);
+        await using var command = new NpgsqlCommand(sql.ToString(), connection);
         #pragma warning restore CA2100
 
         if (orderIds != null && orderIds.Length > 0)
@@ -97,7 +104,7 @@ public class OrderRepository
 
         var orders = new List<Order>();
 
-        using NpgsqlDataReader reader = await command.ExecuteReaderAsync(cancellationToken);
+        await using NpgsqlDataReader reader = await command.ExecuteReaderAsync(cancellationToken);
 
         while (await reader.ReadAsync(cancellationToken))
         {

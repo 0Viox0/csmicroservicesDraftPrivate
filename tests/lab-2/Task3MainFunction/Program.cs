@@ -41,7 +41,7 @@ public static class Program
         // Update configuration using ConfigurationUpdateService
         ConfigurationUpdateService configurationUpdateService =
             scope.ServiceProvider.GetRequiredService<ConfigurationUpdateService>();
-        await configurationUpdateService.UpdateConfiguration(10, string.Empty, CancellationToken.None).ConfigureAwait(false);
+        await configurationUpdateService.UpdateConfiguration(10, string.Empty, CancellationToken.None);
 
         // Run migrations
         IMigrationRunner runner = scope.ServiceProvider.GetRequiredService<IMigrationRunner>();
@@ -58,15 +58,15 @@ public static class Program
         var product2 = new ProductCreationDto { Name = "Product 2", Price = 150.0m };
         var product3 = new ProductCreationDto { Name = "Product 3", Price = 200.0m };
 
-        await productService.CreateProduct(product1, cancellationToken).ConfigureAwait(false);
-        await productService.CreateProduct(product2, cancellationToken).ConfigureAwait(false);
-        await productService.CreateProduct(product3, cancellationToken).ConfigureAwait(false);
+        await productService.CreateProduct(product1, cancellationToken);
+        await productService.CreateProduct(product2, cancellationToken);
+        await productService.CreateProduct(product3, cancellationToken);
 
         Console.WriteLine("Products were created.");
 
         // Step 2: Create an order
         string createdBy = "User1";
-        long orderId = await orderService.CreateOrder(createdBy, cancellationToken).ConfigureAwait(false);
+        long orderId = await orderService.CreateOrder(createdBy, cancellationToken);
         Console.WriteLine($"Order {orderId} was created by {createdBy}.");
 
         // Step 3: Add products to the order
@@ -74,31 +74,31 @@ public static class Program
         var orderItem2 = new OrderItemCreationDto { OrderId = orderId, ProductId = 2, Quantity = 1 };
         var orderItem3 = new OrderItemCreationDto { OrderId = orderId, ProductId = 3, Quantity = 5 };
 
-        await orderService.AddProductToOrder(orderItem1, cancellationToken).ConfigureAwait(false);
-        await orderService.AddProductToOrder(orderItem2, cancellationToken).ConfigureAwait(false);
-        await orderService.AddProductToOrder(orderItem3, cancellationToken).ConfigureAwait(false);
+        await orderService.AddProductToOrder(orderItem1, cancellationToken);
+        await orderService.AddProductToOrder(orderItem2, cancellationToken);
+        await orderService.AddProductToOrder(orderItem3, cancellationToken);
         Console.WriteLine("Products were added to the order.");
 
         // Step 4: Remove one product from the order
         var removeItemDto = new OrderItemRemoveDto { OrderId = orderId, ProductId = 2 };
-        await orderService.RemoveProductFromOrder(removeItemDto, cancellationToken).ConfigureAwait(false);
+        await orderService.RemoveProductFromOrder(removeItemDto, cancellationToken);
         Console.WriteLine("Product with id 2 was removed from the order.");
 
         // Step 5: Transfer the order to processing
-        await orderService.TransferOrderToProcessing(orderId, cancellationToken).ConfigureAwait(false);
+        await orderService.TransferOrderToProcessing(orderId, cancellationToken);
         Console.WriteLine("Order was transferred to processing.");
 
         // Step 6: Fulfill the order
-        await orderService.FulfillOrder(orderId, cancellationToken).ConfigureAwait(false);
+        await orderService.FulfillOrder(orderId, cancellationToken);
         Console.WriteLine("Order was fulfilled.");
 
         // Step 7: Output the entire order history to the console
         var orderHistorySearchDto = new OrderHistoryItemSearchDto { OrderId = orderId, PageIndex = 0, PageSize = 10 };
-        IEnumerable<OrderHistoryReturnItemDto> orderHistory =
-            await orderService.GetOrderHistory(orderHistorySearchDto, cancellationToken).ConfigureAwait(false);
+        IAsyncEnumerable<OrderHistoryReturnItemDto> orderHistory =
+            orderService.GetOrderHistory(orderHistorySearchDto, cancellationToken);
 
         Console.WriteLine("Displaying order history:");
-        foreach (OrderHistoryReturnItemDto historyItem in orderHistory)
+        await foreach (OrderHistoryReturnItemDto historyItem in orderHistory)
         {
             Console.WriteLine($"{historyItem.CreatedAt}: {historyItem.Kind} - {historyItem.Payload}");
         }

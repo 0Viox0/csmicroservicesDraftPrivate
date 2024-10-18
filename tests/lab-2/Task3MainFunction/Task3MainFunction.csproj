@@ -11,4 +11,8 @@
       <ProjectReference Include="..\..\..\src\lab-2\Task3\Task3.csproj" />
     </ItemGroup>
 
+    <ItemGroup>
+      <PackageReference Include="System.Linq.Async" />
+    </ItemGroup>
+
 </Project>

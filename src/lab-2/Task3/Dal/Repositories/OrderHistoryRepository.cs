@@ -1,4 +1,5 @@
 using Npgsql;
+using System.Runtime.CompilerServices;
 using System.Text;
 using Task3.Bll.Dtos.OrderDtos;
 using Task3.Bll.Extensions;
@@ -11,15 +12,18 @@ namespace Task3.Dal.Repositories;
 public class OrderHistoryRepository
 {
     private readonly IOrderHistoryDataSerializer _orderHistoryDataSerializer;
+    private readonly NpgsqlDataSource _dataSource;
 
-    public OrderHistoryRepository(IOrderHistoryDataSerializer orderHistoryDataSerializer)
+    public OrderHistoryRepository(
+        IOrderHistoryDataSerializer orderHistoryDataSerializer,
+        NpgsqlDataSource dataSource)
     {
+        _dataSource = dataSource;
         _orderHistoryDataSerializer = orderHistoryDataSerializer;
     }
 
     public async Task<long> CreateOrderHistory(
         OrderHistoryData orderHistoryData,
-        NpgsqlTransaction transaction,
         CancellationToken cancellationToken)
     {
         const string sql = @"
@@ -27,7 +31,8 @@ public class OrderHistoryRepository
                     VALUES (@OrderId, @CreatedAt, @Kind::order_history_item_kind, @Payload::jsonb)
                     RETURNING order_history_item_id;";
 
-        using var command = new NpgsqlCommand(sql, transaction.Connection, transaction);
+        await using NpgsqlConnection connection = await _dataSource.OpenConnectionAsync(cancellationToken);
+        await using var command = new NpgsqlCommand(sql, connection);
         command.Parameters.AddWithValue("@OrderId", orderHistoryData.OrderId);
         command.Parameters.AddWithValue("@CreatedAt", DateTimeOffset.UtcNow);
         command.Parameters.AddWithValue("@Kind", orderHistoryData.Kind.ToString().FromPascalToSnakeCase());
@@ -36,10 +41,9 @@ public class OrderHistoryRepository
         return (long)(await command.ExecuteScalarAsync(cancellationToken) ?? -1);
     }
 
-    public async Task<IEnumerable<OrderHistoryItem>> GetOrderHistory(
+    public async IAsyncEnumerable<OrderHistoryItem> GetOrderHistory(
         OrderHistoryItemSearchDto orderHistoryItemSearchDto,
-        NpgsqlTransaction transaction,
-        CancellationToken cancellationToken,
+        [EnumeratorCancellation] CancellationToken cancellationToken,
         OrderHistoryItemKind? historyItemKind = null)
     {
         var sql = new StringBuilder("""
@@ -60,7 +64,8 @@ public class OrderHistoryRepository
         // the other way to disable CA2100 is to use just string concatenation
         // but StringBuilder is better in this context (to not create new string every time)
         #pragma warning disable CA2100
-        using var command = new NpgsqlCommand(sql.ToString(), transaction.Connection, transaction);
+        await using NpgsqlConnection connection = await _dataSource.OpenConnectionAsync(cancellationToken);
+        await using var command = new NpgsqlCommand(sql.ToString(), connection);
         #pragma warning restore CA2100
 
         command.Parameters.AddWithValue("@OrderId", orderHistoryItemSearchDto.OrderId);
@@ -75,13 +80,11 @@ public class OrderHistoryRepository
         command.Parameters.AddWithValue("@PageSize", orderHistoryItemSearchDto.PageSize);
         command.Parameters.AddWithValue("@Offset", orderHistoryItemSearchDto.PageIndex * orderHistoryItemSearchDto.PageSize);
 
-        using NpgsqlDataReader reader = await command.ExecuteReaderAsync(cancellationToken);
-
-        var orderHistories = new List<OrderHistoryItem>();
+        await using NpgsqlDataReader reader = await command.ExecuteReaderAsync(cancellationToken);
 
         while (await reader.ReadAsync(cancellationToken))
         {
-            orderHistories.Add(new OrderHistoryItem
+            yield return new OrderHistoryItem
             {
                 Id = reader.GetInt64(0),
                 OrderId = reader.GetInt64(1),
@@ -91,9 +94,7 @@ public class OrderHistoryRepository
                     reader.GetString(3).FromSnakeToPascalCase(),
                     true),
                 Payload = _orderHistoryDataSerializer.Deserialize(reader.GetString(4)),
-            });
+            };
         }
-
-        return orderHistories;
     }
 }

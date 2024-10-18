@@ -6,10 +6,16 @@ namespace Task3.Dal.Repositories;
 
 public class ProductRepository
 {
+    private readonly NpgsqlDataSource _dataSource;
+
+    public ProductRepository(NpgsqlDataSource dataSource)
+    {
+        _dataSource = dataSource;
+    }
+
     public async Task CreateProduct(
         string name,
         decimal productPrice,
-        NpgsqlTransaction transaction,
         CancellationToken cancellationToken)
     {
         const string sql = """
@@ -17,7 +23,8 @@ public class ProductRepository
                            values (@name, @product_price)
                            """;
 
-        using var command = new NpgsqlCommand(sql, transaction.Connection, transaction);
+        await using NpgsqlConnection connection = await _dataSource.OpenConnectionAsync(cancellationToken);
+        await using var command = new NpgsqlCommand(sql, connection);
         command.Parameters.Add(new NpgsqlParameter("@name", name));
         command.Parameters.Add(new NpgsqlParameter("@product_price", productPrice));
 
@@ -27,7 +34,6 @@ public class ProductRepository
     public async Task<IEnumerable<Product>> SearchProduct(
         int pageIndex,
         int pageSize,
-        NpgsqlTransaction transaction,
         CancellationToken cancellationToken,
         string? nameSubstring = null,
         decimal? maxPrice = null,
@@ -49,7 +55,8 @@ public class ProductRepository
         // the other way to disable CA2100 is to use just string concatenation
         // but StringBuilder is better in this context (to not create new string every time)
         #pragma warning disable CA2100
-        using var command = new NpgsqlCommand(sql.ToString(), transaction.Connection, transaction);
+        await using NpgsqlConnection connection = await _dataSource.OpenConnectionAsync(cancellationToken);
+        await using var command = new NpgsqlCommand(sql.ToString(), connection);
         #pragma warning restore CA2100
 
         command.Parameters.AddWithValue("@pageSize", pageSize);
@@ -62,7 +69,7 @@ public class ProductRepository
         if (maxPrice.HasValue)
             command.Parameters.AddWithValue("@maxPrice", maxPrice.Value);
 
-        NpgsqlDataReader reader = await command.ExecuteReaderAsync(cancellationToken);
+        await using NpgsqlDataReader reader = await command.ExecuteReaderAsync(cancellationToken);
         var products = new List<Product>();
 
         while (await reader.ReadAsync(cancellationToken))
