@@ -1,3 +1,4 @@
+using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Task1.Extensions;
 using Task1.Interfaces;
@@ -10,18 +11,22 @@ public static class CustomConfigurationExtensions
 {
     public static IServiceCollection AddCustomConfiguration(
         this IServiceCollection services,
+        ConfigurationManager configurationManager,
         TimeSpan updateInterval)
     {
         services.AddRefitConfigurationClient().AddApiApplicationModelMappers();
+
         services.AddSingleton<CustomConfigurationProvider>();
         services.AddSingleton<CustomConfigurationProviderSource>();
 
-        services.AddSingleton(serviceProvider =>
+        services.AddScoped(serviceProvider =>
         {
             CustomConfigurationProvider configurationProvider
                 = serviceProvider.GetRequiredService<CustomConfigurationProvider>();
-
             IConfigurationClient client = serviceProvider.GetRequiredService<IConfigurationClient>();
+
+            var configurationBuilder = (IConfigurationBuilder)configurationManager;
+            configurationBuilder.Add(serviceProvider.GetRequiredService<CustomConfigurationProviderSource>());
 
             return new ConfigurationUpdateService(configurationProvider, client, updateInterval);
         });
