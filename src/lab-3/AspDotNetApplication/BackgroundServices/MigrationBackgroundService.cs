@@ -1,4 +1,5 @@
 using FluentMigrator.Runner;
+using Task2.Service;
 
 namespace Task1.BackgroundServices;
 
@@ -11,6 +12,12 @@ public class MigrationBackgroundService : BackgroundService
         _serviceProvider = serviceProvider;
     }
 
+    public override async Task StartAsync(CancellationToken cancellationToken)
+    {
+        await UpdateFirstConfiguration(cancellationToken);
+        await base.StartAsync(cancellationToken);
+    }
+
     protected override Task ExecuteAsync(CancellationToken stoppingToken)
     {
         using IServiceScope scope = _serviceProvider.CreateScope();
@@ -20,5 +27,15 @@ public class MigrationBackgroundService : BackgroundService
         migrationRunner.MigrateUp();
 
         return Task.CompletedTask;
+    }
+
+    private async Task UpdateFirstConfiguration(CancellationToken cancellationToken)
+    {
+        using IServiceScope scope = _serviceProvider.CreateScope();
+
+        ConfigurationUpdateService configurationUpdateService =
+            scope.ServiceProvider.GetRequiredService<ConfigurationUpdateService>();
+
+        await configurationUpdateService.UpdateConfiguration(10, string.Empty, cancellationToken);
     }
 }

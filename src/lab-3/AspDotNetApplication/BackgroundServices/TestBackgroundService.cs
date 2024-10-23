@@ -21,13 +21,6 @@ public class TestBackgroundService : BackgroundService
     {
         using var timer = new PeriodicTimer(TimeSpan.FromSeconds(1));
 
-        _databaseSettings.OnChange(dbSettings =>
-        {
-            Console.Out.WriteLine($"Database connection info changed------------------------------------------:\n" +
-                                  $"Host: {dbSettings.Host}\n" +
-                                  $"Port: {dbSettings.Port}");
-        });
-
         while (await timer.WaitForNextTickAsync(stoppingToken))
         {
             Console.Out.WriteLine($"External connection info:\n" +
