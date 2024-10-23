@@ -11,8 +11,6 @@ builder.Configuration.AddJsonFile(
     reloadOnChange: true);
 
 builder.Services
-
-    // .AddConfigurationManagerBasePath(builder.Configuration)
     .AddExternalServiceOptions(builder.Configuration)
     .AddDatabaseOptions(builder.Configuration)
     .AddCustomConfiguration(builder.Configuration, TimeSpan.FromSeconds(2))
@@ -29,9 +27,9 @@ builder.Services.AddSwaggerGen();
 
 builder.Services.AddHostedService<ConfigurationUpdateBackgroundService>();
 
-builder.Services.AddHostedService<TestBackgroundService>();
+// builder.Services.AddHostedService<TestBackgroundService>();
+builder.Services.AddHostedService<MigrationBackgroundService>();
 
-// builder.Services.AddHostedService<MigrationBackgroundService>();
 WebApplication app = builder.Build();
 
 if (app.Environment.IsDevelopment())
