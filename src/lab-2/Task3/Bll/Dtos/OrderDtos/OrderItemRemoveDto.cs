@@ -4,5 +4,5 @@ public class OrderItemRemoveDto
 {
     public long OrderId { get; set; }
 
-    public int ProductId { get; set; }
+    public long ProductId { get; set; }
 }
