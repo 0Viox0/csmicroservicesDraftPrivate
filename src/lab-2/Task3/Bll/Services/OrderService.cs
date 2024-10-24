@@ -1,4 +1,5 @@
 using System.Transactions;
+using Task3.Bll.CustomExceptions;
 using Task3.Bll.Dtos.OrderDtos;
 using Task3.Bll.Mappers;
 using Task3.Dal.Models;
@@ -34,6 +35,11 @@ public class OrderService
         long orderId = await _orderRepository
             .CreateOrder(createdBy, cancellationToken);
 
+        if (orderId == -1)
+        {
+            throw new OrderException("order cound not be created");
+        }
+
         var orderHistoryData =
             new OrderHistoryData(
                 orderId,
@@ -51,16 +57,33 @@ public class OrderService
     {
         using var scope = new TransactionScope(TransactionScopeAsyncFlowOption.Enabled);
 
-        Order order =
-            await _orderRepository
-                .SearchOrders(0, 1,  cancellationToken, [orderItemCreationDto.OrderId])
-                .FirstAsync(cancellationToken);
+        Order? order = await _orderRepository.GetOrderById(orderItemCreationDto.OrderId, cancellationToken);
+
+        if (order == null)
+        {
+            throw new OrderException($"order with id {orderItemCreationDto.OrderId} could not be found");
+        }
 
         if (order.State != OrderState.Created)
-            return;
+        {
+            throw new OrderException($"cannot add product with id '{orderItemCreationDto.ProductId}' " +
+                                     $"to order with id '{orderItemCreationDto.OrderId}' " +
+                                     $"because the state is '{order.State}' but should be 'created'");
+        }
 
-        await _orderItemRepository
+        if (orderItemCreationDto.Quantity == 0)
+        {
+            orderItemCreationDto.Quantity = 1;
+        }
+
+        long result = await _orderItemRepository
             .CreateOrderItem(orderItemCreationDto, cancellationToken);
+
+        if (result == -1)
+        {
+            throw new OrderException($"product with id '{orderItemCreationDto.ProductId}' could not be added " +
+                                     $"to order with id {orderItemCreationDto.OrderId}");
+        }
 
         var orderHistoryData = new OrderHistoryData(
             orderItemCreationDto.OrderId,
@@ -76,13 +99,19 @@ public class OrderService
     {
         using var scope = new TransactionScope(TransactionScopeAsyncFlowOption.Enabled);
 
-        Order order =
-            await _orderRepository
-                .SearchOrders(0, 1, cancellationToken, [orderItemProductRemoveDto.OrderId])
-                .FirstAsync(cancellationToken);
+        Order? order = await _orderRepository.GetOrderById(orderItemProductRemoveDto.OrderId, cancellationToken);
 
-        if (order is not { State: OrderState.Created })
-            return;
+        if (order == null)
+        {
+            throw new OrderException($"order with id {orderItemProductRemoveDto.OrderId} could not be found");
+        }
+
+        if (order.State != OrderState.Created)
+        {
+            throw new OrderException($"cannot add product with id '{orderItemProductRemoveDto.ProductId}' " +
+                                     $"to order with id '{orderItemProductRemoveDto.OrderId}' " +
+                                     $"because the state is '{order.State}' but should be 'created'");
+        }
 
         OrderItem orderItem =
             await _orderItemRepository
@@ -106,6 +135,13 @@ public class OrderService
     {
         using var scope = new TransactionScope(TransactionScopeAsyncFlowOption.Enabled);
 
+        Order? order = await _orderRepository.GetOrderById(orderId, cancellationToken);
+
+        if (order == null)
+        {
+            throw new OrderException($"order with id {orderId} could not be found");
+        }
+
         await _orderRepository
             .UpdateOrderStatus(orderId, OrderState.Processing, cancellationToken);
 
@@ -122,6 +158,13 @@ public class OrderService
     public async Task FulfillOrder(long orderId, CancellationToken cancellationToken)
     {
         using var scope = new TransactionScope(TransactionScopeAsyncFlowOption.Enabled);
+
+        Order? order = await _orderRepository.GetOrderById(orderId, cancellationToken);
+
+        if (order == null)
+        {
+            throw new OrderException($"order with id {orderId} could not be found");
+        }
 
         await _orderRepository
             .UpdateOrderStatus(orderId, OrderState.Completed, cancellationToken);
@@ -140,6 +183,13 @@ public class OrderService
     {
         using var scope = new TransactionScope(TransactionScopeAsyncFlowOption.Enabled);
 
+        Order? order = await _orderRepository.GetOrderById(orderId, cancellationToken);
+
+        if (order == null)
+        {
+            throw new OrderException($"order with id {orderId} could not be found");
+        }
+
         await _orderRepository
             .UpdateOrderStatus(orderId, OrderState.Cancelled, cancellationToken);
 
@@ -153,16 +203,21 @@ public class OrderService
         scope.Complete();
     }
 
-    public IAsyncEnumerable<OrderHistoryReturnItemDto> GetOrderHistory(
+    public async Task<IAsyncEnumerable<OrderHistoryReturnItemDto>> GetOrderHistory(
         OrderHistoryItemSearchDto orderHistoryItemSearchDto,
         CancellationToken cancellationToken)
     {
-        using var scope = new TransactionScope(TransactionScopeAsyncFlowOption.Enabled);
-
         IAsyncEnumerable<OrderHistoryReturnItemDto> orderHistoryReturnItems =
             _orderHistoryRepository
                 .GetOrderHistory(orderHistoryItemSearchDto, cancellationToken)
                 .Select(_orderHistoryMapper.ToOrderHistoryReturnItemDto);
+
+        if (await orderHistoryReturnItems.CountAsync(cancellationToken) == 0)
+        {
+            throw new OrderException($"Order with ID {orderHistoryItemSearchDto.OrderId} was not found.");
+        }
+
+        using var scope = new TransactionScope(TransactionScopeAsyncFlowOption.Enabled);
 
         scope.Complete();
 
@@ -173,7 +228,13 @@ public class OrderService
         OrderHistoryData orderHistoryData,
         CancellationToken cancellationToken)
     {
-        await _orderHistoryRepository
+        long result = await _orderHistoryRepository
             .CreateOrderHistory(orderHistoryData, cancellationToken);
+
+        if (result == -1L)
+        {
+            throw new OrderException($"history wasn't recorder for '{orderHistoryData.Kind}' status" +
+                                     $"with order id {orderHistoryData.OrderId}");
+        }
     }
 }
