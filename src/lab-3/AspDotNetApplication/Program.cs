@@ -1,8 +1,13 @@
+using Microsoft.OpenApi.Models;
 using Task1.BackgroundServices;
+using Task1.CustomMiddleware;
 using Task2.Extensions;
 using Task3.Bll.Extensions;
 using Task3.Dal.RepositoryExtensions;
 
+// TODO: add response model in the swagger configuration
+// TODO: add data annotations to the models
+// TODO: add exception and different checks across the program
 WebApplicationBuilder builder = WebApplication.CreateBuilder(args);
 
 builder.Configuration.AddJsonFile(
@@ -23,12 +28,24 @@ builder.Services
 builder.Services.AddControllers();
 
 builder.Services.AddEndpointsApiExplorer();
-builder.Services.AddSwaggerGen();
+
+string xmlFile = $"{System.Reflection.Assembly.GetExecutingAssembly().GetName().Name}.xml";
+string xmlPath = Path.Combine(AppContext.BaseDirectory, xmlFile);
+builder.Services.AddSwaggerGen(c =>
+{
+    c.SwaggerDoc("v1", new OpenApiInfo
+    {
+        Version = "v1",
+        Title = "Order management APi",
+        Description = "An asp.net API for managing orders",
+    });
+    c.IncludeXmlComments(xmlPath);
+});
 
 builder.Services.AddHostedService<ConfigurationUpdateBackgroundService>();
-
-// builder.Services.AddHostedService<TestBackgroundService>();
 builder.Services.AddHostedService<MigrationBackgroundService>();
+
+builder.Services.AddScoped<ExceptionFormattingMiddleware>();
 
 WebApplication app = builder.Build();
 
@@ -37,6 +54,8 @@ if (app.Environment.IsDevelopment())
     app.UseSwagger();
     app.UseSwaggerUI();
 }
+
+app.UseMiddleware<ExceptionFormattingMiddleware>();
 
 app.UseHttpsRedirection();
 app.UseAuthorization();
