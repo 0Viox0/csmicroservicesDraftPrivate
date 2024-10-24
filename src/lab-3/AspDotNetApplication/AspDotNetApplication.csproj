@@ -8,16 +8,16 @@
     </PropertyGroup>
 
     <ItemGroup>
-        <PackageReference Include="Swashbuckle.AspNetCore" />
-    </ItemGroup>
-
-    <ItemGroup>
       <ProjectReference Include="..\..\lab-2\Task2\Task2.csproj" />
       <ProjectReference Include="..\..\lab-2\Task3\Task3.csproj" />
     </ItemGroup>
 
     <ItemGroup>
       <None Include="externalServiceConnectionInfo.json" />
+    </ItemGroup>
+
+    <ItemGroup>
+      <PackageReference Include="Swashbuckle.AspNetCore" />
     </ItemGroup>
 
 </Project>
