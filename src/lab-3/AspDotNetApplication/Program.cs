@@ -5,9 +5,6 @@ using Task2.Extensions;
 using Task3.Bll.Extensions;
 using Task3.Dal.RepositoryExtensions;
 
-// TODO: add response model in the swagger configuration
-// TODO: add data annotations to the models
-// TODO: add exception and different checks across the program
 WebApplicationBuilder builder = WebApplication.CreateBuilder(args);
 
 builder.Configuration.AddJsonFile(

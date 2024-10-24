@@ -94,7 +94,7 @@ public static class Program
         // Step 7: Output the entire order history to the console
         var orderHistorySearchDto = new OrderHistoryItemSearchDto { OrderId = orderId, PageIndex = 0, PageSize = 10 };
         IAsyncEnumerable<OrderHistoryReturnItemDto> orderHistory =
-            orderService.GetOrderHistory(orderHistorySearchDto, cancellationToken);
+            await orderService.GetOrderHistory(orderHistorySearchDto, cancellationToken);
 
         Console.WriteLine("Displaying order history:");
         await foreach (OrderHistoryReturnItemDto historyItem in orderHistory)

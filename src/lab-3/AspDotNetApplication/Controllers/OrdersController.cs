@@ -227,7 +227,7 @@ public class OrdersController : ControllerBase
         };
 
         IAsyncEnumerable<OrderHistoryReturnItemDto> history =
-            _orderService.GetOrderHistory(searchDto, cancellationToken);
+            await _orderService.GetOrderHistory(searchDto, cancellationToken);
 
         return Ok(await history.ToListAsync(cancellationToken));
     }
