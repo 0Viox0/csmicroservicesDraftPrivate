@@ -24,7 +24,7 @@ public class RequestClient : IRequestClient, ILibraryOperationHandler
             return await Task.FromCanceled<ResponseModel>(cancellationToken).ConfigureAwait(false);
         }
 
-        cancellationToken.Register(() =>
+        CancellationTokenRegistration cancellationTokenRegistration = cancellationToken.Register(() =>
         {
             if (_tasks.TryRemove(requestId, out TaskCompletionSource<ResponseModel>? source))
             {
@@ -32,16 +32,23 @@ public class RequestClient : IRequestClient, ILibraryOperationHandler
             }
         });
 
-        if (!_tasks.TryAdd(requestId, taskCompletionSource))
+        try
         {
-            throw new InvalidOperationException("Task could not be added");
-        }
+            if (!_tasks.TryAdd(requestId, taskCompletionSource))
+            {
+                throw new InvalidOperationException("Task could not be added");
+            }
 
-        await Task.Run(() => _libraryOperationService
-                .BeginOperation(requestId, request, cancellationToken))
+            await Task.Run(() => _libraryOperationService
+                    .BeginOperation(requestId, request, cancellationToken))
                 .ConfigureAwait(false);
 
-        return await taskCompletionSource.Task.ConfigureAwait(false);
+            return await taskCompletionSource.Task.ConfigureAwait(false);
+        }
+        finally
+        {
+            cancellationTokenRegistration.Dispose();
+        }
     }
 
     public void HandleOperationResult(Guid requestId, byte[] data)
