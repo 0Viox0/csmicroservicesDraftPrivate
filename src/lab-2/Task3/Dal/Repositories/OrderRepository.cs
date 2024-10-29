@@ -100,4 +100,32 @@ public class OrderRepository
             };
         }
     }
+
+    public async Task<Order?> GetOrderById(long orderId, CancellationToken cancellationToken)
+    {
+        string sql = """
+                     SELECT order_id, order_state, order_created_at, order_created_by
+                     FROM orders
+                     WHERE order_id = @orderId
+                     """;
+
+        await using NpgsqlConnection connection = await _dataSource.OpenConnectionAsync(cancellationToken);
+        await using var command = new NpgsqlCommand(sql, connection);
+        command.Parameters.Add(new NpgsqlParameter("@orderId", orderId));
+
+        await using NpgsqlDataReader reader = await command.ExecuteReaderAsync(cancellationToken);
+
+        if (await reader.ReadAsync(cancellationToken))
+        {
+            return new Order
+            {
+                Id = reader.GetInt32(0),
+                State = reader.GetFieldValue<OrderState>(1),
+                CreatedAt = reader.GetDateTime(2),
+                CreatedBy = reader.GetString(3),
+            };
+        }
+
+        return null;
+    }
 }

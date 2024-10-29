@@ -54,6 +54,8 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Task3", "src\lab-2\Task3\Ta
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Task3MainFunction", "tests\lab-2\Task3MainFunction\Task3MainFunction.csproj", "{342CF028-4CA2-49A4-BB05-8CDA2E7EA61F}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "AspDotNetApplication", "src\lab-3\AspDotNetApplication\AspDotNetApplication.csproj", "{ED911015-1E9A-47A5-B3A7-768BA3FF1E06}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -80,6 +82,7 @@ Global
 		{3B88BF0B-B78C-40F7-801E-D4378A41E241} = {8B8CBED8-2579-4794-BC32-367A2D35B89B}
 		{B245BB32-406B-4B40-BEE0-45DB34937D8A} = {32B94AB4-6B8A-47C8-95BE-B21604BFE6C4}
 		{342CF028-4CA2-49A4-BB05-8CDA2E7EA61F} = {8B8CBED8-2579-4794-BC32-367A2D35B89B}
+		{ED911015-1E9A-47A5-B3A7-768BA3FF1E06} = {FEB339FD-E3EA-43CA-BF27-90208DDA4CD1}
 	EndGlobalSection
 	GlobalSection(ProjectConfigurationPlatforms) = postSolution
 		{55F8A83B-F498-4784-99F8-B492F165F371}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
@@ -122,5 +125,9 @@ Global
 		{342CF028-4CA2-49A4-BB05-8CDA2E7EA61F}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{342CF028-4CA2-49A4-BB05-8CDA2E7EA61F}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{342CF028-4CA2-49A4-BB05-8CDA2E7EA61F}.Release|Any CPU.Build.0 = Release|Any CPU
+		{ED911015-1E9A-47A5-B3A7-768BA3FF1E06}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{ED911015-1E9A-47A5-B3A7-768BA3FF1E06}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{ED911015-1E9A-47A5-B3A7-768BA3FF1E06}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{ED911015-1E9A-47A5-B3A7-768BA3FF1E06}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 EndGlobal

@@ -1,7 +1,6 @@
 using FluentMigrator.Runner;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
-using Task2.ConfigurationProviders;
 using Task2.Extensions;
 using Task2.Service;
 using Task3.Bll.Dtos.OrderDtos;
@@ -24,7 +23,7 @@ public static class Program
             .AddConfigurationManagerBasePath(configurationManger)
             .AddExternalServiceOptions(configurationManger)
             .AddDatabaseOptions(configurationManger)
-            .AddCustomConfiguration(TimeSpan.FromSeconds(2))
+            .AddCustomConfiguration(configurationManger, TimeSpan.FromSeconds(2))
             .AddOrderHistoryDataJsonSerializer()
             .AddRepositories()
             .AddBllServices()
@@ -35,8 +34,8 @@ public static class Program
         using IServiceScope scope = serviceProvider.CreateScope();
 
         // Add our custom configuration source
-        configurationBuilder
-            .Add(scope.ServiceProvider.GetRequiredService<CustomConfigurationProviderSource>());
+        // configurationBuilder
+        //     .Add(scope.ServiceProvider.GetRequiredService<CustomConfigurationProviderSource>());
 
         // Update configuration using ConfigurationUpdateService
         ConfigurationUpdateService configurationUpdateService =
@@ -95,7 +94,7 @@ public static class Program
         // Step 7: Output the entire order history to the console
         var orderHistorySearchDto = new OrderHistoryItemSearchDto { OrderId = orderId, PageIndex = 0, PageSize = 10 };
         IAsyncEnumerable<OrderHistoryReturnItemDto> orderHistory =
-            orderService.GetOrderHistory(orderHistorySearchDto, cancellationToken);
+            await orderService.GetOrderHistory(orderHistorySearchDto, cancellationToken);
 
         Console.WriteLine("Displaying order history:");
         await foreach (OrderHistoryReturnItemDto historyItem in orderHistory)
