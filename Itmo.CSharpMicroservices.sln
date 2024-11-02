@@ -56,6 +56,8 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Task3MainFunction", "tests\
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "AspDotNetApplication", "src\lab-3\AspDotNetApplication\AspDotNetApplication.csproj", "{ED911015-1E9A-47A5-B3A7-768BA3FF1E06}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "GrpcServer", "src\lab-4\GrpcServer\GrpcServer.csproj", "{25FC6290-B045-4CF7-B1A3-8E1063944AE2}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -83,6 +85,7 @@ Global
 		{B245BB32-406B-4B40-BEE0-45DB34937D8A} = {32B94AB4-6B8A-47C8-95BE-B21604BFE6C4}
 		{342CF028-4CA2-49A4-BB05-8CDA2E7EA61F} = {8B8CBED8-2579-4794-BC32-367A2D35B89B}
 		{ED911015-1E9A-47A5-B3A7-768BA3FF1E06} = {FEB339FD-E3EA-43CA-BF27-90208DDA4CD1}
+		{25FC6290-B045-4CF7-B1A3-8E1063944AE2} = {7D572118-AEF1-42D4-A359-FA85886B8B5A}
 	EndGlobalSection
 	GlobalSection(ProjectConfigurationPlatforms) = postSolution
 		{55F8A83B-F498-4784-99F8-B492F165F371}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
@@ -129,5 +132,9 @@ Global
 		{ED911015-1E9A-47A5-B3A7-768BA3FF1E06}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{ED911015-1E9A-47A5-B3A7-768BA3FF1E06}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{ED911015-1E9A-47A5-B3A7-768BA3FF1E06}.Release|Any CPU.Build.0 = Release|Any CPU
+		{25FC6290-B045-4CF7-B1A3-8E1063944AE2}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{25FC6290-B045-4CF7-B1A3-8E1063944AE2}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{25FC6290-B045-4CF7-B1A3-8E1063944AE2}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{25FC6290-B045-4CF7-B1A3-8E1063944AE2}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 EndGlobal
