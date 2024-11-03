@@ -9,7 +9,7 @@ public class PlMapper
         return new ProductCreationDto
         {
             Name = productCreationModel.Name,
-            Price = productCreationModel.Price,
+            Price = (decimal)productCreationModel.Price,
         };
     }
 }

@@ -1,3 +1,5 @@
+using GrpcServer.Extensions;
+using GrpcServer.Services;
 using Task1.BackgroundServices;
 using Task2.Extensions;
 using Task3.Bll.Extensions;
@@ -7,6 +9,7 @@ WebApplicationBuilder builder = WebApplication.CreateBuilder(args);
 
 // Add services to the container.
 builder.Services.AddGrpc();
+builder.Services.AddGrpcReflection();
 
 builder.Configuration.AddJsonFile(
     "externalServiceConnectionInfo.json",
@@ -21,15 +24,18 @@ builder.Services
     .AddRepositories()
     .AddBllServices()
     .AddMigrations()
-    .AddNpgsqlDataSource();
+    .AddNpgsqlDataSource()
+    .AddPlMapper();
 
 builder.Services.AddHostedService<ConfigurationUpdateBackgroundService>();
 builder.Services.AddHostedService<MigrationBackgroundService>();
 
 WebApplication app = builder.Build();
 
-// Configure the HTTP request pipeline.
-// app.MapGrpcService<GreeterService>();
+app.MapGrpcService<OrderGrpcService>();
+app.MapGrpcService<ProductGrpcService>();
+app.MapGrpcReflectionService();
+
 app.MapGet(
     "/",
     () =>
