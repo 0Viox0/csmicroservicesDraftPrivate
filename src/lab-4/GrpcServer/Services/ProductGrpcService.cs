@@ -1,3 +1,4 @@
+using Google.Protobuf.WellKnownTypes;
 using Grpc.Core;
 using GrpcServer.Mappers;
 using Task3.Bll.Services;

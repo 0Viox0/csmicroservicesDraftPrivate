@@ -1,16 +1,15 @@
 syntax = "proto3";
+import "google/protobuf/empty.proto";
 
 option csharp_namespace = "GrpcServer";
 
 package grpcserver;
 
 service ProductsService {
-  rpc CreateProduct (CreateProductRequest) returns (Empty);
+  rpc CreateProduct (CreateProductRequest) returns (google.protobuf.Empty);
 }
 
 message CreateProductRequest {
   string name = 1;
   int64  price = 3;
 }
-
-message Empty { }
