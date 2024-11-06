@@ -1,3 +1,4 @@
+using Google.Type;
 using GrpcClientHttpGateway.Manager;
 using GrpcClientHttpGateway.Models;
 using GrpcServer;
@@ -63,7 +64,7 @@ public class GrpcModelMapper
         return new CreateProductRequest
         {
             Name = productCreationModel.Name,
-            Price = (long)productCreationModel.Price,
+            Price = new Money { DecimalValue = productCreationModel.Price },
         };
     }
 
