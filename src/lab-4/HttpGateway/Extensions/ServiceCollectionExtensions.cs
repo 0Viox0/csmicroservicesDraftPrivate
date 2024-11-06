@@ -1,3 +1,4 @@
+using GrpcClientHttpGateway.CustomMiddleware;
 using GrpcClientHttpGateway.Manager;
 using GrpcClientHttpGateway.Mappers;
 
@@ -9,6 +10,7 @@ public static class ServiceCollectionExtensions
     {
         services.AddScoped<GrpcModelMapper>();
         services.AddScoped<PayloadManager>();
+        services.AddScoped<GrpcExceptionHandlingMiddleware>();
 
         return services;
     }
