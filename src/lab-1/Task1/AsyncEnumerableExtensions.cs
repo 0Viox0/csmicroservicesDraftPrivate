@@ -13,7 +13,7 @@ public static class AsyncEnumerableExtensions
         try
         {
             while ((await Task.WhenAll(allEnumerableEnumerators
-                       .Select(e => e.MoveNextAsync().AsTask())).ConfigureAwait(false))
+                       .Select(e => e.MoveNextAsync().AsTask())))
                    .All(result => result))
             {
                 yield return resultSelector(allEnumerableEnumerators.Select(e => e.Current).ToArray());

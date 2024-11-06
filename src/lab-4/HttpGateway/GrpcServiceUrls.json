@@ -1,0 +1,6 @@
+{
+  "GrpcClientOptions": {
+    "OrdersServiceUrl": "http://localhost:5040",
+    "ProductsServiceUrl": "http://localhost:5040"
+  }
+}
