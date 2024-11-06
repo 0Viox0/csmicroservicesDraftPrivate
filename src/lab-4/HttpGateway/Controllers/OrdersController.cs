@@ -231,6 +231,10 @@ public class OrdersController : ControllerBase
             _mapper.ToGetOrderHistoryRequest(orderId, pageIndex, pageSize),
             cancellationToken: cancellationToken);
 
-        return Ok(result.OrderHistory.ToList());
+        var orderHistoryItems = result.OrderHistory
+            .Select(_mapper.ToOrderHistoryItemReturnModel)
+            .ToList();
+
+        return Ok(orderHistoryItems);
     }
 }

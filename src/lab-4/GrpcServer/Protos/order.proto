@@ -61,6 +61,7 @@ message GetOrderHistoryRequest {
 message GetOrderHistoryResponse {
   repeated OrderHistoryItem order_history = 1;
 }
+
 message OrderHistoryItem {
   int64 id = 1;
   int64 order_id = 2;
@@ -70,9 +71,29 @@ message OrderHistoryItem {
 }
 
 message OrderHistoryData {
-  int64 order_id = 1;
-  OrderHistoryItemKind kind = 2;
-  string message = 3;
+  oneof payload {
+    CreatedData created_data = 1;
+    ItemAddedData item_added_data = 2;
+    ItemRemovedData item_removed_data = 3;
+    StateChangedData state_changed_data = 4;
+  }
+}
+
+message CreatedData {
+  string message = 1;
+}
+
+message ItemAddedData {
+  int64 product_id = 1;
+  int32 quantity = 2;
+}
+
+message ItemRemovedData {
+  int64 product_id = 1;
+}
+
+message StateChangedData {
+  string new_state = 1;
 }
 
 enum OrderHistoryItemKind {

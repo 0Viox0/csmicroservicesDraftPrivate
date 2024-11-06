@@ -2,6 +2,7 @@ using Google.Protobuf.WellKnownTypes;
 using Grpc.Core;
 using Task3.Bll.Dtos.OrderDtos;
 using Task3.Bll.Services;
+using Enum = System.Enum;
 
 namespace GrpcServer.Services;
 
@@ -98,7 +99,6 @@ public class OrderGrpcService : OrdersService.OrdersServiceBase
 
         var response = new GetOrderHistoryResponse();
 
-        // Convert each OrderHistoryReturnItemDto to an OrderHistoryItem
         await foreach (OrderHistoryReturnItemDto itemDto in history)
         {
             var orderHistoryItem = new OrderHistoryItem
@@ -106,19 +106,53 @@ public class OrderGrpcService : OrdersService.OrdersServiceBase
                 Id = itemDto.Id,
                 OrderId = itemDto.OrderId,
                 CreatedAt = itemDto.CreatedAt.ToString("o"),
-                Kind = (OrderHistoryItemKind)itemDto.Kind,
-                Payload = itemDto.Payload != null ? new OrderHistoryData
-                {
-                    OrderId = itemDto.Payload.OrderId,
-                    Kind = (OrderHistoryItemKind)itemDto.Payload.Kind,
-                    Message = itemDto.Payload.Message,
-                }
-                : null,
+                Kind = (OrderHistoryItemKind)Enum.Parse(
+                    typeof(OrderHistoryItemKind),
+                    itemDto.Kind.ToString(),
+                    ignoreCase: true),
+                Payload = MapPayload(itemDto.Payload),
             };
 
             response.OrderHistory.Add(orderHistoryItem);
         }
 
         return response;
+    }
+
+    // helper method for mapping application payloadDto to the grpc payload
+    private OrderHistoryData? MapPayload(Task3.Dal.Serializators.OrderHistoryData? payloadDto)
+    {
+        if (payloadDto == null) return null;
+
+        return payloadDto.Kind switch
+        {
+            Task3.Dal.Models.Enums.OrderHistoryItemKind.Created => new OrderHistoryData
+            {
+                CreatedData = new CreatedData { Message = payloadDto.Message },
+            },
+            Task3.Dal.Models.Enums.OrderHistoryItemKind.ItemAdded => new OrderHistoryData
+            {
+                ItemAddedData = new ItemAddedData
+                {
+                    ProductId = payloadDto.OrderId,
+                    Quantity = int.Parse(payloadDto.Message.Split(" ").Last()),
+                },
+            },
+            Task3.Dal.Models.Enums.OrderHistoryItemKind.ItemRemoved => new OrderHistoryData
+            {
+                ItemRemovedData = new ItemRemovedData
+                {
+                    ProductId = payloadDto.OrderId,
+                },
+            },
+            Task3.Dal.Models.Enums.OrderHistoryItemKind.StateChanged => new OrderHistoryData
+            {
+                StateChangedData = new StateChangedData
+                {
+                    NewState = payloadDto.Message.Split(' ').Last(),
+                },
+            },
+            _ => null,
+        };
     }
 }

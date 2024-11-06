@@ -1,3 +1,4 @@
+using GrpcClientHttpGateway.Manager;
 using GrpcClientHttpGateway.Models;
 using GrpcServer;
 
@@ -5,6 +6,13 @@ namespace GrpcClientHttpGateway.Mappers;
 
 public class GrpcModelMapper
 {
+    private readonly PayloadManager _payloadManager;
+
+    public GrpcModelMapper(PayloadManager payloadManager)
+    {
+        _payloadManager = payloadManager;
+    }
+
     public CreateOrderRequest ToCreateOrderRequest(CreatedByModel request)
     {
         return new CreateOrderRequest
@@ -57,5 +65,18 @@ public class GrpcModelMapper
             Name = productCreationModel.Name,
             Price = (long)productCreationModel.Price,
         };
+    }
+
+    public OrderHistoryItemReturnModel ToOrderHistoryItemReturnModel(OrderHistoryItem orderHistoryItem)
+    {
+        var itemReturnModel = new OrderHistoryItemReturnModel
+        {
+            Id = orderHistoryItem.Id,
+            OrderId = orderHistoryItem.OrderId,
+            CreatedAt = orderHistoryItem.CreatedAt,
+            Payload = _payloadManager.GetPayload(orderHistoryItem.Payload),
+        };
+
+        return itemReturnModel;
     }
 }
