@@ -1,4 +1,5 @@
 using GrpcServer.Extensions;
+using GrpcServer.Interceptors;
 using GrpcServer.Services;
 using Task1.BackgroundServices;
 using Task2.Extensions;
@@ -8,7 +9,7 @@ using Task3.Dal.RepositoryExtensions;
 WebApplicationBuilder builder = WebApplication.CreateBuilder(args);
 
 // Add services to the container.
-builder.Services.AddGrpc();
+builder.Services.AddGrpc(options => options.Interceptors.Add<ErrorHandlingInterceptor>());
 builder.Services.AddGrpcReflection();
 
 builder.Configuration.AddJsonFile(

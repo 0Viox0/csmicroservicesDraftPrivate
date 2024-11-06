@@ -214,10 +214,21 @@ public class OrdersController : ControllerBase
     ///
     ///     GET /orders/1/history?pageIndex=0&amp;pageSize=10
     ///
+    /// Description of possible status codes:
+    /// - 200: The order history was successfully retrieved. Returns a list of order history items.
+    /// - 404: The order was not found.
+    ///
+    /// The polymorphic response model consists of:
+    /// - `OrderHistoryItem`: Represents an individual history entry for an order, which may include different types of payload information such as message, product details, or order state changes.
     /// </remarks>
-    /// <response code="200">Returns the order history items.</response>
-    /// <response code="404">If the order is not found.</response>
-    /// <returns>A list of order history items.</returns>
+    /// <response code="200">
+    /// Returns the order history items as a list. Each item may have a different structure depending on the payload type:
+    /// - For example, `message` type for order creation or state change, `productId` and `quantity` for product-related updates, and `newState` for state transitions.
+    /// </response>
+    /// <response code="404">
+    /// If the order is not found.
+    /// </response>
+    /// <returns>A list of order history items, which may contain various payloads such as messages, product details, or state changes.</returns>
     [HttpGet("{orderId}/history")]
     [ProducesResponseType(StatusCodes.Status200OK, Type = typeof(List<GetOrderHistoryResponse>))]
     [ProducesResponseType(StatusCodes.Status404NotFound)]

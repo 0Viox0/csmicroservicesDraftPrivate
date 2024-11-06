@@ -1,3 +1,4 @@
+using GrpcClientHttpGateway.CustomMiddleware;
 using GrpcClientHttpGateway.Extensions;
 using Microsoft.OpenApi.Models;
 
@@ -35,6 +36,8 @@ builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
 
 WebApplication app = builder.Build();
+
+app.UseMiddleware<GrpcExceptionHandlingMiddleware>();
 
 // Configure the HTTP request pipeline.
 if (app.Environment.IsDevelopment())
