@@ -1,5 +1,5 @@
 using GrpcClientHttpGateway.Mappers;
-using GrpcClientHttpGateway.Models;
+using GrpcClientHttpGateway.Models.PayloadModels;
 using GrpcServer;
 using Microsoft.AspNetCore.Mvc;
 
@@ -40,17 +40,17 @@ public class OrdersController : ControllerBase
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
     [ProducesResponseType(StatusCodes.Status500InternalServerError)]
     public async Task<IActionResult> CreateOrder(
-        CreatedByModel createdByModel,
+        CreatedByPayload createdByPayload,
         CancellationToken cancellationToken)
     {
-        if (createdByModel.CreatedBy is null)
+        if (createdByPayload.CreatedBy is null)
         {
             return BadRequest();
         }
 
         CreateOrderResponse orderId =
             await _orderServiceClient.CreateOrderAsync(
-                _mapper.ToCreateOrderRequest(createdByModel),
+                _mapper.ToCreateOrderRequest(createdByPayload),
                 cancellationToken: cancellationToken);
 
         return Created($"orders/{orderId}", orderId.OrderId);

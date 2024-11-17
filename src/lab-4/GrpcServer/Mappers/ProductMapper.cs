@@ -2,7 +2,7 @@ using Task3.Bll.Dtos.ProductDtos;
 
 namespace GrpcServer.Mappers;
 
-public class PlMapper
+public class ProductMapper
 {
     public ProductCreationDto ToProductCreationDto(CreateProductRequest productCreationModel)
     {

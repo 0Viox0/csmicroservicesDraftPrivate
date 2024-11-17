@@ -1,5 +1,4 @@
 syntax = "proto3";
-import "google/protobuf/empty.proto";
 
 option csharp_namespace = "GrpcServer";
 
@@ -7,17 +6,11 @@ package order;
 
 service OrdersService {
   rpc CreateOrder (CreateOrderRequest) returns (CreateOrderResponse);
-  
-  rpc AddProductToOrder (AddProductToOrderRequest) returns (google.protobuf.Empty);
-  
-  rpc RemoveProductFromOrder (RemoveProductFromOrderRequest) returns (google.protobuf.Empty);
-  
-  rpc TransferOrderToProcessing (TransferOrderToProcessingRequest) returns (google.protobuf.Empty);
-  
-  rpc FulfillOrder (FulfillOrderRequest) returns (google.protobuf.Empty);
-  
-  rpc CancelOrder (CancelOrderRequest) returns (google.protobuf.Empty);
-  
+  rpc AddProductToOrder (AddProductToOrderRequest) returns (AddProductToOrderResponse);
+  rpc RemoveProductFromOrder (RemoveProductFromOrderRequest) returns (RemoveProductFromOrderResponse);
+  rpc TransferOrderToProcessing (TransferOrderToProcessingRequest) returns (TransferOrderToProcessingResponse);
+  rpc FulfillOrder (FulfillOrderRequest) returns (FulfillOrderResponse);
+  rpc CancelOrder (CancelOrderRequest) returns (CancelOrderResponse);
   rpc GetOrderHistory (GetOrderHistoryRequest) returns (GetOrderHistoryResponse);
 }
 
@@ -35,21 +28,36 @@ message AddProductToOrderRequest {
   int32 quantity = 3;
 }
 
+message AddProductToOrderResponse {
+}
+
 message RemoveProductFromOrderRequest {
   int64 order_id = 1;
   int64 product_id = 2;
+}
+
+message RemoveProductFromOrderResponse {
 }
 
 message TransferOrderToProcessingRequest {
   int64 order_id = 1;
 }
 
+message TransferOrderToProcessingResponse {
+}
+
 message FulfillOrderRequest {
   int64 order_id = 1;
 }
 
+message FulfillOrderResponse {
+}
+
 message CancelOrderRequest {
   int64 order_id = 1;
+}
+
+message CancelOrderResponse {
 }
 
 message GetOrderHistoryRequest {
@@ -66,12 +74,12 @@ message OrderHistoryItem {
   int64 id = 1;
   int64 order_id = 2;
   string created_at = 3;
-  OrderHistoryItemKind kind = 4;
-  OrderHistoryData payload = 5;
+  OrderEventType kind = 4;
+  OrderHistoryPayload payload = 5;
 }
 
-message OrderHistoryData {
-  oneof payload {
+message OrderHistoryPayload {
+  oneof data {
     CreatedData created_data = 1;
     ItemAddedData item_added_data = 2;
     ItemRemovedData item_removed_data = 3;
@@ -96,7 +104,7 @@ message StateChangedData {
   string new_state = 1;
 }
 
-enum OrderHistoryItemKind {
+enum OrderEventType {
   CREATED = 0;
   ITEM_ADDED = 1;
   ITEM_REMOVED = 2;

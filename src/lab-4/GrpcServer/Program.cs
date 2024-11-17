@@ -12,11 +12,6 @@ WebApplicationBuilder builder = WebApplication.CreateBuilder(args);
 builder.Services.AddGrpc(options => options.Interceptors.Add<ErrorHandlingInterceptor>());
 builder.Services.AddGrpcReflection();
 
-builder.Configuration.AddJsonFile(
-    "externalServiceConnectionInfo.json",
-    optional: false,
-    reloadOnChange: true);
-
 builder.Services
     .AddExternalServiceOptions(builder.Configuration)
     .AddDatabaseOptions(builder.Configuration)
@@ -33,8 +28,8 @@ builder.Services.AddHostedService<MigrationBackgroundService>();
 
 WebApplication app = builder.Build();
 
-app.MapGrpcService<OrderGrpcService>();
-app.MapGrpcService<ProductGrpcService>();
+app.MapGrpcService<OrderController>();
+app.MapGrpcService<ProductController>();
 app.MapGrpcReflectionService();
 
 app.MapGet(

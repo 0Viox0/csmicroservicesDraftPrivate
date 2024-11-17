@@ -12,6 +12,7 @@
       <PackageReference Include="FluentMigrator.Runner" />
       <PackageReference Include="Microsoft.Extensions.Configuration.Json" />
       <PackageReference Include="Npgsql" />
+      <PackageReference Include="Refit" />
       <PackageReference Include="System.Linq.Async" />
     </ItemGroup>
 

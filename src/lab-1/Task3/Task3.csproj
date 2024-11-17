@@ -8,6 +8,7 @@
 
     <ItemGroup>
       <PackageReference Include="Itmo.Dev.Platform.Common" />
+      <PackageReference Include="Refit" />
       <PackageReference Include="System.Linq.Async" />
     </ItemGroup>
 

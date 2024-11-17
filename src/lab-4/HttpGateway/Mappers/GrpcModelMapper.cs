@@ -1,20 +1,15 @@
 using Google.Type;
-using GrpcClientHttpGateway.Manager;
+using GrpcClientHttpGateway.Extensions;
 using GrpcClientHttpGateway.Models;
+using GrpcClientHttpGateway.Models.PayloadModels;
 using GrpcServer;
+using OrderHistoryItemKind = GrpcClientHttpGateway.Models.OrderHistoryItemKind;
 
 namespace GrpcClientHttpGateway.Mappers;
 
 public class GrpcModelMapper
 {
-    private readonly PayloadManager _payloadManager;
-
-    public GrpcModelMapper(PayloadManager payloadManager)
-    {
-        _payloadManager = payloadManager;
-    }
-
-    public CreateOrderRequest ToCreateOrderRequest(CreatedByModel request)
+    public CreateOrderRequest ToCreateOrderRequest(CreatedByPayload request)
     {
         return new CreateOrderRequest
         {
@@ -70,13 +65,12 @@ public class GrpcModelMapper
 
     public OrderHistoryItemReturnModel ToOrderHistoryItemReturnModel(OrderHistoryItem orderHistoryItem)
     {
-        var itemReturnModel = new OrderHistoryItemReturnModel
-        {
-            Id = orderHistoryItem.Id,
-            OrderId = orderHistoryItem.OrderId,
-            CreatedAt = orderHistoryItem.CreatedAt,
-            Payload = _payloadManager.GetPayload(orderHistoryItem.Payload),
-        };
+        var itemReturnModel = new OrderHistoryItemReturnModel(
+            orderHistoryItem.Id,
+            orderHistoryItem.OrderId,
+            orderHistoryItem.CreatedAt,
+            (OrderHistoryItemKind)orderHistoryItem.Kind,
+            orderHistoryItem.Payload.ToOrderHistoryPayload());
 
         return itemReturnModel;
     }

@@ -1,16 +1,15 @@
-using Google.Protobuf.WellKnownTypes;
 using Grpc.Core;
+using GrpcServer.Extensions;
 using Task3.Bll.Dtos.OrderDtos;
 using Task3.Bll.Services;
-using Enum = System.Enum;
 
 namespace GrpcServer.Services;
 
-public class OrderGrpcService : OrdersService.OrdersServiceBase
+public class OrderController : OrdersService.OrdersServiceBase
 {
     private readonly OrderService _orderService;
 
-    public OrderGrpcService(OrderService orderService)
+    public OrderController(OrderService orderService)
     {
         _orderService = orderService;
     }
@@ -27,7 +26,7 @@ public class OrderGrpcService : OrdersService.OrdersServiceBase
         };
     }
 
-    public override async Task<Empty> AddProductToOrder(
+    public override async Task<AddProductToOrderResponse> AddProductToOrder(
         AddProductToOrderRequest request,
         ServerCallContext context)
     {
@@ -40,10 +39,10 @@ public class OrderGrpcService : OrdersService.OrdersServiceBase
 
         await _orderService.AddProductToOrder(orderItemCreationDto, context.CancellationToken);
 
-        return new Empty();
+        return new AddProductToOrderResponse();
     }
 
-    public override async Task<Empty> RemoveProductFromOrder(
+    public override async Task<RemoveProductFromOrderResponse> RemoveProductFromOrder(
         RemoveProductFromOrderRequest request,
         ServerCallContext context)
     {
@@ -55,32 +54,32 @@ public class OrderGrpcService : OrdersService.OrdersServiceBase
 
         await _orderService.RemoveProductFromOrder(orderItemRemoveDto, context.CancellationToken);
 
-        return new Empty();
+        return new RemoveProductFromOrderResponse();
     }
 
-    public override async Task<Empty> TransferOrderToProcessing(
+    public override async Task<TransferOrderToProcessingResponse> TransferOrderToProcessing(
         TransferOrderToProcessingRequest request,
         ServerCallContext context)
     {
         await _orderService.TransferOrderToProcessing(request.OrderId, context.CancellationToken);
 
-        return new Empty();
+        return new TransferOrderToProcessingResponse();
     }
 
-    public override async Task<Empty> FulfillOrder(
+    public override async Task<FulfillOrderResponse> FulfillOrder(
         FulfillOrderRequest request,
         ServerCallContext context)
     {
         await _orderService.FulfillOrder(request.OrderId, context.CancellationToken);
 
-        return new Empty();
+        return new FulfillOrderResponse();
     }
 
-    public override async Task<Empty> CancelOrder(CancelOrderRequest request, ServerCallContext context)
+    public override async Task<CancelOrderResponse> CancelOrder(CancelOrderRequest request, ServerCallContext context)
     {
         await _orderService.CancelOrder(request.OrderId, context.CancellationToken);
 
-        return new Empty();
+        return new CancelOrderResponse();
     }
 
     public override async Task<GetOrderHistoryResponse> GetOrderHistory(
@@ -106,53 +105,13 @@ public class OrderGrpcService : OrdersService.OrdersServiceBase
                 Id = itemDto.Id,
                 OrderId = itemDto.OrderId,
                 CreatedAt = itemDto.CreatedAt.ToString("o"),
-                Kind = (OrderHistoryItemKind)Enum.Parse(
-                    typeof(OrderHistoryItemKind),
-                    itemDto.Kind.ToString(),
-                    ignoreCase: true),
-                Payload = MapPayload(itemDto.Payload),
+                Kind = (OrderEventType)itemDto.Kind,
+                Payload = itemDto.Payload.ToOrderHistoryData(),
             };
 
             response.OrderHistory.Add(orderHistoryItem);
         }
 
         return response;
-    }
-
-    // helper method for mapping application payloadDto to the grpc payload
-    private OrderHistoryData? MapPayload(Task3.Dal.Serializators.OrderHistoryData? payloadDto)
-    {
-        if (payloadDto == null) return null;
-
-        return payloadDto.Kind switch
-        {
-            Task3.Dal.Models.Enums.OrderHistoryItemKind.Created => new OrderHistoryData
-            {
-                CreatedData = new CreatedData { Message = payloadDto.Message },
-            },
-            Task3.Dal.Models.Enums.OrderHistoryItemKind.ItemAdded => new OrderHistoryData
-            {
-                ItemAddedData = new ItemAddedData
-                {
-                    ProductId = payloadDto.OrderId,
-                    Quantity = int.Parse(payloadDto.Message.Split(" ").Last()),
-                },
-            },
-            Task3.Dal.Models.Enums.OrderHistoryItemKind.ItemRemoved => new OrderHistoryData
-            {
-                ItemRemovedData = new ItemRemovedData
-                {
-                    ProductId = payloadDto.OrderId,
-                },
-            },
-            Task3.Dal.Models.Enums.OrderHistoryItemKind.StateChanged => new OrderHistoryData
-            {
-                StateChangedData = new StateChangedData
-                {
-                    NewState = payloadDto.Message.Split(' ').Last(),
-                },
-            },
-            _ => null,
-        };
     }
 }

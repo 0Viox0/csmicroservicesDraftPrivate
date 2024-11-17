@@ -11,6 +11,7 @@
         <PackageReference Include="Google.Api.CommonProtos" />
         <PackageReference Include="Grpc.AspNetCore" />
         <PackageReference Include="Grpc.Net.Client" />
+        <PackageReference Include="Refit" />
         <PackageReference Include="Swashbuckle.AspNetCore" />
     </ItemGroup>
 
