@@ -8,7 +8,7 @@ public static class OrderHistoryDataExtension
 {
     public static OrderHistoryPayloadBase ToOrderHistoryPayload(this OrderHistoryData orderHistoryData)
     {
-        return orderHistoryData switch
+        OrderHistoryPayloadBase result = orderHistoryData switch
         {
             { CreatedData: not null } => new CreatedByPayload(orderHistoryData.CreatedData.Message),
             { ItemAddedData: not null } => new ItemAddedPayload(
@@ -18,5 +18,7 @@ public static class OrderHistoryDataExtension
             { StateChangedData: not null } => new StateChangedPayload(orderHistoryData.StateChangedData.NewState),
             _ => throw new InvalidOperationException("No valid data found in OrderHistoryData"),
         };
+
+        return result;
     }
 }
