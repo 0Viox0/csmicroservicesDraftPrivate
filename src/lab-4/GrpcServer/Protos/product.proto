@@ -1,0 +1,18 @@
+syntax = "proto3";
+import "money.proto";
+
+option csharp_namespace = "GrpcServer";
+
+package product;
+
+service ProductsService {
+  rpc CreateProduct (CreateProductRequest) returns (CreateProductResponse);
+}
+
+message CreateProductRequest {
+  string name = 1;
+  google.type.Money price = 3;
+}
+
+message CreateProductResponse {
+}

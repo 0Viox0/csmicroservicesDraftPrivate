@@ -1,0 +1,112 @@
+syntax = "proto3";
+
+option csharp_namespace = "GrpcServer";
+
+package order;
+
+service OrdersService {
+  rpc CreateOrder (CreateOrderRequest) returns (CreateOrderResponse);
+  rpc AddProductToOrder (AddProductToOrderRequest) returns (AddProductToOrderResponse);
+  rpc RemoveProductFromOrder (RemoveProductFromOrderRequest) returns (RemoveProductFromOrderResponse);
+  rpc TransferOrderToProcessing (TransferOrderToProcessingRequest) returns (TransferOrderToProcessingResponse);
+  rpc FulfillOrder (FulfillOrderRequest) returns (FulfillOrderResponse);
+  rpc CancelOrder (CancelOrderRequest) returns (CancelOrderResponse);
+  rpc GetOrderHistory (GetOrderHistoryRequest) returns (GetOrderHistoryResponse);
+}
+
+message CreateOrderRequest {
+  string created_by = 1;
+}
+
+message CreateOrderResponse {
+  int64 order_id = 1;
+}
+
+message AddProductToOrderRequest {
+  int64 order_id = 1;
+  int64 product_id = 2;
+  int32 quantity = 3;
+}
+
+message AddProductToOrderResponse {
+}
+
+message RemoveProductFromOrderRequest {
+  int64 order_id = 1;
+  int64 product_id = 2;
+}
+
+message RemoveProductFromOrderResponse {
+}
+
+message TransferOrderToProcessingRequest {
+  int64 order_id = 1;
+}
+
+message TransferOrderToProcessingResponse {
+}
+
+message FulfillOrderRequest {
+  int64 order_id = 1;
+}
+
+message FulfillOrderResponse {
+}
+
+message CancelOrderRequest {
+  int64 order_id = 1;
+}
+
+message CancelOrderResponse {
+}
+
+message GetOrderHistoryRequest {
+  int64 order_id = 1;
+  int32 page_index = 2;
+  int32 page_size = 3;
+}
+
+message GetOrderHistoryResponse {
+  repeated OrderHistoryItem order_history = 1;
+}
+
+message OrderHistoryItem {
+  int64 id = 1;
+  int64 order_id = 2;
+  string created_at = 3;
+  OrderEventType kind = 4;
+  OrderHistoryPayload payload = 5;
+}
+
+message OrderHistoryPayload {
+  oneof data {
+    CreatedData created_data = 1;
+    ItemAddedData item_added_data = 2;
+    ItemRemovedData item_removed_data = 3;
+    StateChangedData state_changed_data = 4;
+  }
+}
+
+message CreatedData {
+  string message = 1;
+}
+
+message ItemAddedData {
+  int64 product_id = 1;
+  int32 quantity = 2;
+}
+
+message ItemRemovedData {
+  int64 product_id = 1;
+}
+
+message StateChangedData {
+  string new_state = 1;
+}
+
+enum OrderEventType {
+  CREATED = 0;
+  ITEM_ADDED = 1;
+  ITEM_REMOVED = 2;
+  STATE_CHANGED = 3;
+}
