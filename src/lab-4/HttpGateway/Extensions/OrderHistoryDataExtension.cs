@@ -6,19 +6,40 @@ namespace GrpcClientHttpGateway.Extensions;
 
 public static class OrderHistoryDataExtension
 {
-    public static OrderHistoryPayloadBase ToOrderHistoryPayload(this OrderHistoryData orderHistoryData)
+    public static OrderHistoryPayloadBase ToOrderHistoryPayload(this OrderHistoryPayload orderHistoryData)
     {
-        OrderHistoryPayloadBase result = orderHistoryData switch
+        OrderHistoryPayloadBase result = orderHistoryData.DataCase switch
         {
-            { CreatedData: not null } => new CreatedByPayload(orderHistoryData.CreatedData.Message),
-            { ItemAddedData: not null } => new ItemAddedPayload(
-                orderHistoryData.ItemAddedData.ProductId,
-                orderHistoryData.ItemAddedData.Quantity),
-            { ItemRemovedData: not null } => new ItemRemovedPayload(orderHistoryData.ItemRemovedData.ProductId),
-            { StateChangedData: not null } => new StateChangedPayload(orderHistoryData.StateChangedData.NewState),
-            _ => throw new InvalidOperationException("No valid data found in OrderHistoryData"),
+            OrderHistoryPayload.DataOneofCase.CreatedData => ToCreatedDataPayload(orderHistoryData.CreatedData),
+            OrderHistoryPayload.DataOneofCase.ItemAddedData => ToItemAddedPayload(orderHistoryData.ItemAddedData),
+            OrderHistoryPayload.DataOneofCase.ItemRemovedData => ToItemRemovedPayload(orderHistoryData.ItemRemovedData),
+            OrderHistoryPayload.DataOneofCase.StateChangedData => ToStateChangedPayload(orderHistoryData.StateChangedData),
+            OrderHistoryPayload.DataOneofCase.None or
+            _ => throw new ArgumentOutOfRangeException(nameof(orderHistoryData), orderHistoryData, null),
         };
 
         return result;
+    }
+
+    public static OrderHistoryPayloadBase ToCreatedDataPayload(this CreatedData createdData)
+    {
+        return new CreatedByPayload(createdData.Message);
+    }
+
+    public static OrderHistoryPayloadBase ToItemAddedPayload(this ItemAddedData orderHistoryData)
+    {
+        return new ItemAddedPayload(
+            orderHistoryData.ProductId,
+            orderHistoryData.Quantity);
+    }
+
+    public static OrderHistoryPayloadBase ToItemRemovedPayload(this ItemRemovedData itemRemovedData)
+    {
+        return new ItemRemovedPayload(itemRemovedData.ProductId);
+    }
+
+    public static OrderHistoryPayloadBase ToStateChangedPayload(this StateChangedData stateChangedData)
+    {
+        return new StateChangedPayload(stateChangedData.NewState);
     }
 }

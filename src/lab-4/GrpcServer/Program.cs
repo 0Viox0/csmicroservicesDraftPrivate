@@ -21,7 +21,7 @@ builder.Services
     .AddBllServices()
     .AddMigrations()
     .AddNpgsqlDataSource()
-    .AddPlMapper();
+    .AddProductMapper();
 
 builder.Services.AddHostedService<ConfigurationUpdateBackgroundService>();
 builder.Services.AddHostedService<MigrationBackgroundService>();

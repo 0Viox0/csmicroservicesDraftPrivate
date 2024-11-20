@@ -4,7 +4,7 @@ namespace GrpcServer.Extensions;
 
 public static class ServiceCollectionExtensions
 {
-    public static IServiceCollection AddPlMapper(this IServiceCollection services)
+    public static IServiceCollection AddProductMapper(this IServiceCollection services)
     {
         services.AddScoped<ProductMapper>();
 
