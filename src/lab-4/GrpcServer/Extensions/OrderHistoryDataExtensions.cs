@@ -1,5 +1,5 @@
-using Task3.Dal.Models.Enums;
-using Task3.Dal.Serializators;
+using Dal.Models.Enums;
+using Dal.Serializators;
 
 namespace GrpcServer.Extensions;
 

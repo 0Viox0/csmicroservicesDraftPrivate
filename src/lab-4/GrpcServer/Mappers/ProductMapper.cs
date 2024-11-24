@@ -1,4 +1,4 @@
-using Task3.Bll.Dtos.ProductDtos;
+using Bll.Dtos.ProductDtos;
 
 namespace GrpcServer.Mappers;
 

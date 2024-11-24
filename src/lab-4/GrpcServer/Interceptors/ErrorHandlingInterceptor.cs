@@ -1,6 +1,6 @@
+using Bll.CustomExceptions;
 using Grpc.Core;
 using Grpc.Core.Interceptors;
-using Task3.Bll.CustomExceptions;
 
 namespace GrpcServer.Interceptors;
 
