@@ -10,5 +10,7 @@ public class ConsumerOptions
 
     public int BatchSize { get; set; }
 
+    public TimeSpan BatchTimeout { get; set; }
+
     public string ConnectionUrl => $"${Host}:{Port}";
 }

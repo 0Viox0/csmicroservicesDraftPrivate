@@ -1,8 +1,10 @@
+using Bll.KafkaConsumerMessageHandler;
 using Bll.Mappers;
 using Bll.Services;
 using Dal.Migrations;
 using Dal.Models.Enums;
 using FluentMigrator.Runner;
+using Kafka.Consumer;
 using Kafka.Extensions;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
@@ -74,13 +76,18 @@ public static class ServiceCollectionExtensions
         return services;
     }
 
-    public static IServiceCollection AddKafkaToBll(
+    public static IServiceCollection AddKafka(
         this IServiceCollection services,
         IConfiguration configuration)
     {
+        services.AddScoped<
+            IConsumedMessageHandler<OrderProcessingKey, OrderProcessingValue>,
+            Handler>();
+
         services.AddProtoSerializer();
-        services.AddProducer<OrderCreationKey, OrderCreationValue>();
         services.AddKafkaOptions(configuration);
+        services.AddProducer<OrderCreationKey, OrderCreationValue>();
+        services.AddConsumer<OrderProcessingKey, OrderProcessingValue>();
 
         return services;
     }

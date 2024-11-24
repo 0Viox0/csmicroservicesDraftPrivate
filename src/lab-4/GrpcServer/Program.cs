@@ -22,7 +22,7 @@ builder.Services
     .AddMigrations()
     .AddNpgsqlDataSource()
     .AddProductMapper()
-    .AddKafkaToBll(builder.Configuration);
+    .AddKafka(builder.Configuration);
 
 builder.Services.AddHostedService<ConfigurationUpdateBackgroundService>();
 builder.Services.AddHostedService<MigrationBackgroundService>();
