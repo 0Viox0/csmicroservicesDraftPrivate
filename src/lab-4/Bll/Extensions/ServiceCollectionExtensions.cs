@@ -10,7 +10,6 @@ using Microsoft.Extensions.Options;
 using Npgsql;
 using Orders.Kafka.Contracts;
 using Task1.ConfigurationModels;
-using Task3.Bll;
 
 namespace Bll.Extensions;
 
@@ -75,10 +74,13 @@ public static class ServiceCollectionExtensions
         return services;
     }
 
-    public static IServiceCollection AddKafkaToBll(this IServiceCollection services)
+    public static IServiceCollection AddKafkaToBll(
+        this IServiceCollection services,
+        IConfiguration configuration)
     {
         services.AddProtoSerializer();
         services.AddProducer<OrderCreationKey, OrderCreationValue>();
+        services.AddKafkaOptions(configuration);
 
         return services;
     }

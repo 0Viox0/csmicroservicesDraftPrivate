@@ -5,6 +5,8 @@ using Dal.Models;
 using Dal.Models.Enums;
 using Dal.Repositories;
 using Dal.Serializators;
+using Google.Protobuf.WellKnownTypes;
+using Kafka.Models;
 using Kafka.Producer;
 using Orders.Kafka.Contracts;
 using System.Transactions;
@@ -37,23 +39,30 @@ public class OrderService
     {
         using var scope = new TransactionScope(TransactionScopeAsyncFlowOption.Enabled);
 
-        long orderId = await _orderRepository
-            .CreateOrder(createdBy, cancellationToken);
+        long orderId = await _orderRepository.CreateOrder(createdBy, cancellationToken);
+        if (orderId == -1) throw new OrderException("order could not be created");
 
-        if (orderId == -1)
-        {
-            throw new OrderException("order cound not be created");
-        }
-
-        var orderHistoryData =
-            new OrderHistoryData(
-                orderId,
-                OrderHistoryItemKind.Created,
-                $"Order created by {createdBy}");
+        var orderHistoryData = new OrderHistoryData(
+            orderId,
+            OrderHistoryItemKind.Created,
+            $"Order created by {createdBy}");
 
         await LogOrderHistory(orderHistoryData, cancellationToken);
 
-        // TODO: add producing the creation message here
+        var orderCreationKey = new OrderCreationKey { OrderId = orderId, };
+        var orderCreationValue = new OrderCreationValue
+        {
+            OrderCreated = new OrderCreationValue.Types.OrderCreated
+            {
+                OrderId = orderId,
+                CreatedAt = Timestamp.FromDateTime(DateTime.UtcNow),
+            },
+        };
+
+        await _messageProducer.ProduceAsync(
+            new KafkaMessage<OrderCreationKey, OrderCreationValue>(
+                orderCreationKey, orderCreationValue),
+            cancellationToken);
 
         scope.Complete();
 
@@ -143,14 +152,10 @@ public class OrderService
         using var scope = new TransactionScope(TransactionScopeAsyncFlowOption.Enabled);
 
         Order? order = await _orderRepository.GetOrderById(orderId, cancellationToken);
-
         if (order == null)
-        {
             throw new OrderException($"order with id {orderId} could not be found");
-        }
 
-        await _orderRepository
-            .UpdateOrderStatus(orderId, OrderState.Processing, cancellationToken);
+        await _orderRepository.UpdateOrderStatus(orderId, OrderState.Processing, cancellationToken);
 
         var orderHistoryData = new OrderHistoryData(
             orderId,
@@ -158,6 +163,21 @@ public class OrderService
             "Order transferred to processing.");
 
         await LogOrderHistory(orderHistoryData, cancellationToken);
+
+        var orderCreationKey = new OrderCreationKey { OrderId = orderId, };
+        var orderCreationValue = new OrderCreationValue
+        {
+            OrderProcessingStarted = new OrderCreationValue.Types.OrderProcessingStarted
+            {
+                OrderId = orderId,
+                StartedAt = Timestamp.FromDateTime(DateTime.UtcNow),
+            },
+        };
+
+        await _messageProducer.ProduceAsync(
+            new KafkaMessage<OrderCreationKey, OrderCreationValue>(
+                orderCreationKey, orderCreationValue),
+            cancellationToken);
 
         scope.Complete();
     }

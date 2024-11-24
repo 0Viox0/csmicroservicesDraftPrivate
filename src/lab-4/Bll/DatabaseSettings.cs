@@ -1,4 +1,4 @@
-namespace Task3.Bll;
+namespace Bll;
 
 public class DatabaseSettings
 {

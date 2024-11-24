@@ -1,6 +1,6 @@
 using Task2.Service;
 
-namespace Task1.BackgroundServices;
+namespace GrpcServer.BackgroundServices;
 
 public class ConfigurationUpdateBackgroundService : BackgroundService
 {

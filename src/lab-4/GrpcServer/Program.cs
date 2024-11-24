@@ -1,9 +1,9 @@
 using Bll.Extensions;
 using Dal.RepositoryExtensions;
+using GrpcServer.BackgroundServices;
 using GrpcServer.Extensions;
 using GrpcServer.Interceptors;
 using GrpcServer.Services;
-using Task1.BackgroundServices;
 using Task2.Extensions;
 
 WebApplicationBuilder builder = WebApplication.CreateBuilder(args);
@@ -22,7 +22,7 @@ builder.Services
     .AddMigrations()
     .AddNpgsqlDataSource()
     .AddProductMapper()
-    .AddKafkaToBll();
+    .AddKafkaToBll(builder.Configuration);
 
 builder.Services.AddHostedService<ConfigurationUpdateBackgroundService>();
 builder.Services.AddHostedService<MigrationBackgroundService>();

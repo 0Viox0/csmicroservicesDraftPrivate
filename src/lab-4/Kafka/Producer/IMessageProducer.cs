@@ -1,6 +1,8 @@
+using Kafka.Models;
+
 namespace Kafka.Producer;
 
 public interface IMessageProducer<TKey, TValue>
 {
-    Task ProduceAsync(ProducerMessage<TKey, TValue> message);
+    public Task ProduceAsync(KafkaMessage<TKey, TValue> message, CancellationToken cancellationToken = default);
 }
