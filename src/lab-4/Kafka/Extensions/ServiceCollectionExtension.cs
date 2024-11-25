@@ -13,6 +13,7 @@ public static class ServiceCollectionExtension
     public static IServiceCollection AddProtoSerializer(this IServiceCollection services)
     {
         services.AddScoped(typeof(ProtobufSerializer<>));
+        services.AddScoped(typeof(ProtobufDeserializer<>));
 
         return services;
     }

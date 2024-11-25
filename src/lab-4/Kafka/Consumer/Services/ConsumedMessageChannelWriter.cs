@@ -31,9 +31,13 @@ public class ConsumedMessageChannelWriter<TKey, TValue>
         ChannelWriter<KafkaMessage<TKey, TValue>> writer,
         CancellationToken cancellationToken = default)
     {
+        await Task.Yield();
+
         var config = new ConsumerConfig
         {
             BootstrapServers = _consumerOptions.ConnectionUrl,
+            GroupId = _consumerOptions.GroupId,
+            GroupInstanceId = _consumerOptions.GroupInstanceId,
             AutoOffsetReset = AutoOffsetReset.Earliest,
             EnableAutoCommit = false,
         };
@@ -53,6 +57,8 @@ public class ConsumedMessageChannelWriter<TKey, TValue>
                 var message = new KafkaMessage<TKey, TValue>(resultMessage.Message.Key, resultMessage.Message.Value);
 
                 await writer.WriteAsync(message, cancellationToken);
+
+                consumer.Commit(resultMessage);
             }
         }
         finally

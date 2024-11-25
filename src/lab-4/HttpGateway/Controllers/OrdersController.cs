@@ -6,7 +6,7 @@ using Microsoft.AspNetCore.Mvc;
 namespace GrpcClientHttpGateway.Controllers;
 
 [ApiController]
-[Route("[controller]")]
+[Route("orders")]
 public class OrdersController : ControllerBase
 {
     private readonly OrdersService.OrdersServiceClient _orderServiceClient;
@@ -72,7 +72,7 @@ public class OrdersController : ControllerBase
     /// <response code="200">Indicates that the product was successfully added to the order.</response>
     /// <response code="404">If the order or product is not found.</response>
     /// <returns>Action result indicating the outcome of the operation.</returns>
-    [HttpPost("{orderId}/product/{productId}")]
+    [HttpPost("{orderId}/products/{productId}")]
     [ProducesResponseType(StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
     public async Task<IActionResult> AddProductToOrder(
@@ -103,7 +103,7 @@ public class OrdersController : ControllerBase
     /// <response code="200">Indicates that the product was successfully removed from the order.</response>
     /// <response code="404">If the order or product is not found.</response>
     /// <returns>Action result indicating the outcome of the operation.</returns>
-    [HttpDelete("{orderId}/product/{productId}")]
+    [HttpDelete("{orderId}/products/{productId}")]
     [ProducesResponseType(StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
     public async Task<IActionResult> RemoveProductFromOrder(
@@ -132,7 +132,7 @@ public class OrdersController : ControllerBase
     /// <response code="200">Indicates that the order has been successfully transferred to processing.</response>
     /// <response code="404">If the order is not found.</response>
     /// <returns>Action result indicating the outcome of the operation.</returns>
-    [HttpPost("{orderId}/process")]
+    [HttpPost("{orderId}/processing")]
     [ProducesResponseType(StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
     public async Task<IActionResult> TransferOrderToProcessing(
@@ -160,7 +160,7 @@ public class OrdersController : ControllerBase
     /// <response code="204">Indicates that the order has been successfully fulfilled.</response>
     /// <response code="404">If the order is not found.</response>
     /// <returns>Action result indicating the outcome of the operation.</returns>
-    [HttpPost("{orderId}/fulfill")]
+    [HttpPost("{orderId}/fulfillment")]
     [ProducesResponseType(StatusCodes.Status204NoContent)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
     public async Task<IActionResult> FulfillOrder(
@@ -188,7 +188,7 @@ public class OrdersController : ControllerBase
     /// <response code="204">Indicates that the order has been successfully canceled.</response>
     /// <response code="404">If the order is not found.</response>
     /// <returns>Action result indicating the outcome of the operation.</returns>
-    [HttpPost("{orderId}/cancel")]
+    [HttpPost("{orderId}/cancelation")]
     [ProducesResponseType(StatusCodes.Status204NoContent)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
     public async Task<IActionResult> CancelOrder(

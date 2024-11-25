@@ -13,6 +13,7 @@ builder.Services
     .AddOrdersServiceOptions(builder.Configuration)
     .AddHttpOrdersGrpcClient()
     .AddHttpProductsGrpcClient()
+    .AddHttpOrderProcessingGrpcClient()
     .AddGrpcModelMapper();
 
 string xmlFile = $"{System.Reflection.Assembly.GetExecutingAssembly().GetName().Name}.xml";

@@ -12,5 +12,9 @@ public class ConsumerOptions
 
     public TimeSpan BatchTimeout { get; set; }
 
-    public string ConnectionUrl => $"${Host}:{Port}";
+    public string? GroupId { get; set; }
+
+    public string? GroupInstanceId { get; set; }
+
+    public string ConnectionUrl => $"{Host}:{Port}";
 }

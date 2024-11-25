@@ -8,6 +8,7 @@ public static class ServiceCollectionExtensions
     public static IServiceCollection AddGrpcModelMapper(this IServiceCollection services)
     {
         services.AddScoped<GrpcModelMapper>();
+        services.AddScoped<ModelToOrderServiceGrpcMapper>();
         services.AddScoped<GrpcExceptionHandlingMiddleware>();
 
         return services;

@@ -6,7 +6,7 @@ using Microsoft.AspNetCore.Mvc;
 namespace GrpcClientHttpGateway.Controllers;
 
 [ApiController]
-[Route("[controller]")]
+[Route("products")]
 public class ProductsController : ControllerBase
 {
     private readonly ProductsService.ProductsServiceClient _productServiceClient;

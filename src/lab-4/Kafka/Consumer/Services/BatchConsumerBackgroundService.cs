@@ -1,4 +1,5 @@
 using Kafka.Models;
+using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using System.Threading.Channels;
 
@@ -6,19 +7,24 @@ namespace Kafka.Consumer.Services;
 
 public class BatchConsumerBackgroundService<TKey, TValue> : BackgroundService
 {
-    private readonly IMessageConsumerChannelReader<TKey, TValue> _channelReader;
-    private readonly IMessageConsumerChannelWriter<TKey, TValue> _channelWriter;
+    private readonly IServiceProvider _serviceProvider;
 
     public BatchConsumerBackgroundService(
-        IMessageConsumerChannelReader<TKey, TValue> channelReader,
-        IMessageConsumerChannelWriter<TKey, TValue> channelWriter)
+        IServiceProvider serviceProvider)
     {
-        _channelReader = channelReader;
-        _channelWriter = channelWriter;
+        _serviceProvider = serviceProvider;
     }
 
     protected override async Task ExecuteAsync(CancellationToken stoppingToken)
     {
+        using IServiceScope scope = _serviceProvider.CreateScope();
+
+        IMessageConsumerChannelReader<TKey, TValue> channelReader =
+            scope.ServiceProvider.GetRequiredService<IMessageConsumerChannelReader<TKey, TValue>>();
+
+        IMessageConsumerChannelWriter<TKey, TValue> channelWriter =
+            scope.ServiceProvider.GetRequiredService<IMessageConsumerChannelWriter<TKey, TValue>>();
+
         var channelOptions = new UnboundedChannelOptions
         {
             SingleReader = true,
@@ -28,7 +34,7 @@ public class BatchConsumerBackgroundService<TKey, TValue> : BackgroundService
         var channel = Channel.CreateUnbounded<KafkaMessage<TKey, TValue>>(channelOptions);
 
         await Task.WhenAll(
-            _channelReader.ReadMessagesFromChannel(channel.Reader, stoppingToken),
-            _channelWriter.WriteToChannelAsync(channel.Writer, stoppingToken));
+            channelReader.ReadMessagesFromChannel(channel.Reader, stoppingToken),
+            channelWriter.WriteToChannelAsync(channel.Writer, stoppingToken));
     }
 }

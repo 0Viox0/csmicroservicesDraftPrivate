@@ -27,13 +27,15 @@ public class ConsumedMessageChannelReader<TKey, TValue>
         ChannelReader<KafkaMessage<TKey, TValue>> reader,
         CancellationToken cancellationToken)
     {
+        await Task.Yield();
+
         IAsyncEnumerable<IReadOnlyList<KafkaMessage<TKey, TValue>>> enumerable = reader
             .ReadAllAsync(cancellationToken)
             .ChunkAsync(_consumerOptions.BatchSize, _consumerOptions.BatchTimeout);
 
         await foreach (IReadOnlyList<KafkaMessage<TKey, TValue>> chunk in enumerable)
         {
-            await _handler.HandleMessageAsync(chunk.ToAsyncEnumerable(), cancellationToken);
+            await _handler.HandleMessageAsync(chunk, cancellationToken);
         }
     }
 }
