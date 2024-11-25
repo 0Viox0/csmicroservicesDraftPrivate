@@ -1,0 +1,24 @@
+<Project Sdk="Microsoft.NET.Sdk.Web">
+
+    <PropertyGroup>
+        <TargetFramework>net8.0</TargetFramework>
+        <Nullable>enable</Nullable>
+        <ImplicitUsings>enable</ImplicitUsings>
+    </PropertyGroup>
+
+    <ItemGroup>
+        <Protobuf ProtoRoot="Protos" Include="Protos\**\*.proto" Exclude="Protos\money.proto" GrpcServices="Server"/>
+    </ItemGroup>
+
+    <ItemGroup>
+        <PackageReference Include="Google.Api.CommonProtos" />
+        <PackageReference Include="Grpc.AspNetCore" />
+        <PackageReference Include="Grpc.AspNetCore.Server.Reflection" />
+        <PackageReference Include="Refit" />
+    </ItemGroup>
+
+    <ItemGroup>
+      <ProjectReference Include="..\Bll\Bll.csproj" />
+    </ItemGroup>
+
+</Project>

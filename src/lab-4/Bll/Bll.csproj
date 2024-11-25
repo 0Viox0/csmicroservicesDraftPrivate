@@ -1,0 +1,32 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+    <PropertyGroup>
+        <TargetFramework>net8.0</TargetFramework>
+        <ImplicitUsings>enable</ImplicitUsings>
+        <Nullable>enable</Nullable>
+    </PropertyGroup>
+
+    <ItemGroup>
+        <PackageReference Include="FluentMigrator" />
+        <PackageReference Include="FluentMigrator.Extensions.Postgres" />
+        <PackageReference Include="FluentMigrator.Runner" />
+        <PackageReference Include="Google.Protobuf" />
+        <PackageReference Include="Grpc.Tools">
+          <PrivateAssets>all</PrivateAssets>
+          <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
+        </PackageReference>
+        <PackageReference Include="Microsoft.Extensions.Configuration.Json" />
+        <PackageReference Include="Npgsql" />
+        <PackageReference Include="Refit" />
+        <PackageReference Include="System.Linq.Async" />
+    </ItemGroup>
+
+    <ItemGroup>
+      <ProjectReference Include="..\Dal\Dal.csproj" />
+      <ProjectReference Include="..\Kafka\Kafka.csproj" />
+    </ItemGroup>
+
+    <ItemGroup>
+        <Protobuf ProtoRoot="Protos" Include="Protos\**\*.proto" GrpcServices="None"/>
+    </ItemGroup>
+</Project>
