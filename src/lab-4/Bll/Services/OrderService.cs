@@ -213,9 +213,7 @@ public class OrderService
         Order? order = await _orderRepository.GetOrderById(orderId, cancellationToken);
 
         if (order == null)
-        {
             throw new OrderException($"order with id {orderId} could not be found");
-        }
 
         await _orderRepository
             .UpdateOrderStatus(orderId, OrderState.Cancelled, cancellationToken);
@@ -251,7 +249,7 @@ public class OrderService
         return orderHistoryReturnItems;
     }
 
-    private async Task LogOrderHistory(
+    public async Task LogOrderHistory(
         OrderHistoryData orderHistoryData,
         CancellationToken cancellationToken)
     {

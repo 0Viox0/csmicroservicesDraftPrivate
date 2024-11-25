@@ -1,3 +1,5 @@
+using Bll.ConsumedMessagesChainOfResponsibility;
+using Bll.ConsumedMessagesChainOfResponsibility.ConcreteHandlers;
 using Bll.KafkaConsumerMessageHandler;
 using Bll.Mappers;
 using Bll.Services;
@@ -88,6 +90,35 @@ public static class ServiceCollectionExtensions
         services.AddKafkaOptions(configuration);
         services.AddProducer<OrderCreationKey, OrderCreationValue>();
         services.AddConsumer<OrderProcessingKey, OrderProcessingValue>();
+
+        services.AddConsumedMessagesChain();
+
+        return services;
+    }
+
+    private static IServiceCollection AddConsumedMessagesChain(this IServiceCollection services)
+    {
+        services.AddScoped<ApprovalReceivedHandler>();
+        services.AddScoped<DeliveryFinishedHandler>();
+        services.AddScoped<DeliveryStartedHandler>();
+        services.AddScoped<PackingFinishedHandler>();
+        services.AddScoped<PackingStartedHandler>();
+
+        services.AddScoped<IHandler>(sp =>
+        {
+            ApprovalReceivedHandler approvalHandler = sp.GetRequiredService<ApprovalReceivedHandler>();
+            DeliveryFinishedHandler deliveryFinishedHandler = sp.GetRequiredService<DeliveryFinishedHandler>();
+            DeliveryStartedHandler deliveryStartedHandler = sp.GetRequiredService<DeliveryStartedHandler>();
+            PackingFinishedHandler packingFinishedHandler = sp.GetRequiredService<PackingFinishedHandler>();
+            PackingStartedHandler packingStartedHandler = sp.GetRequiredService<PackingStartedHandler>();
+
+            approvalHandler.SetNext(deliveryFinishedHandler)
+                .SetNext(deliveryStartedHandler)
+                .SetNext(packingFinishedHandler)
+                .SetNext(packingStartedHandler);
+
+            return approvalHandler;
+        });
 
         return services;
     }

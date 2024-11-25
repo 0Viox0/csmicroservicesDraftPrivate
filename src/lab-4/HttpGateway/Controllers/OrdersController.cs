@@ -147,34 +147,6 @@ public class OrdersController : ControllerBase
     }
 
     /// <summary>
-    /// Fulfills an order.
-    /// </summary>
-    /// <param name="orderId">The ID of the order to fulfill.</param>
-    /// <param name="cancellationToken">Cancellation token.</param>
-    /// <remarks>
-    /// Sample request:
-    ///
-    ///     POST /orders/1/fulfill
-    ///
-    /// </remarks>
-    /// <response code="204">Indicates that the order has been successfully fulfilled.</response>
-    /// <response code="404">If the order is not found.</response>
-    /// <returns>Action result indicating the outcome of the operation.</returns>
-    [HttpPost("{orderId}/fulfillment")]
-    [ProducesResponseType(StatusCodes.Status204NoContent)]
-    [ProducesResponseType(StatusCodes.Status404NotFound)]
-    public async Task<IActionResult> FulfillOrder(
-        long orderId,
-        CancellationToken cancellationToken)
-    {
-        await _orderServiceClient.FulfillOrderAsync(
-            new FulfillOrderRequest { OrderId = orderId },
-            cancellationToken: cancellationToken);
-
-        return NoContent();
-    }
-
-    /// <summary>
     /// Cancels an order.
     /// </summary>
     /// <param name="orderId">The ID of the order to cancel.</param>

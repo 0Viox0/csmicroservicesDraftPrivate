@@ -9,7 +9,6 @@ service OrdersService {
   rpc AddProductToOrder (AddProductToOrderRequest) returns (AddProductToOrderResponse);
   rpc RemoveProductFromOrder (RemoveProductFromOrderRequest) returns (RemoveProductFromOrderResponse);
   rpc TransferOrderToProcessing (TransferOrderToProcessingRequest) returns (TransferOrderToProcessingResponse);
-  rpc FulfillOrder (FulfillOrderRequest) returns (FulfillOrderResponse);
   rpc CancelOrder (CancelOrderRequest) returns (CancelOrderResponse);
   rpc GetOrderHistory (GetOrderHistoryRequest) returns (GetOrderHistoryResponse);
 }
@@ -44,13 +43,6 @@ message TransferOrderToProcessingRequest {
 }
 
 message TransferOrderToProcessingResponse {
-}
-
-message FulfillOrderRequest {
-  int64 order_id = 1;
-}
-
-message FulfillOrderResponse {
 }
 
 message CancelOrderRequest {
@@ -105,8 +97,9 @@ message StateChangedData {
 }
 
 enum OrderEventType {
-  CREATED = 0;
-  ITEM_ADDED = 1;
-  ITEM_REMOVED = 2;
-  STATE_CHANGED = 3;
+  ORDER_EVENT_TYPE_UNSPECIFIED = 0;
+  ORDER_EVENT_TYPE_CREATED = 1;
+  ORDER_EVENT_TYPE_ITEM_ADDED = 2;
+  ORDER_EVENT_TYPE_ITEM_REMOVED = 3;
+  ORDER_EVENT_TYPE_STATE_CHANGED = 4;
 }
