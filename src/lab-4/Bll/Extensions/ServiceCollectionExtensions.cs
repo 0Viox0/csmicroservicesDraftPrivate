@@ -96,6 +96,14 @@ public static class ServiceCollectionExtensions
         return services;
     }
 
+    public static IServiceCollection AddBatchConsumerBackgroundService(
+        this IServiceCollection services)
+    {
+        services.AddBatchConsumerBackgroundService<OrderProcessingKey, OrderProcessingValue>();
+
+        return services;
+    }
+
     private static IServiceCollection AddConsumedMessagesChain(this IServiceCollection services)
     {
         services.AddScoped<ApprovalReceivedHandler>();

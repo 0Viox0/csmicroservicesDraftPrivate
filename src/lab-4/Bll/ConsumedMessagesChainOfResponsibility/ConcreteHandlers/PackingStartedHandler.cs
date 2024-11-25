@@ -27,7 +27,7 @@ public class PackingStartedHandler : HandlerBase
                 new OrderHistoryData(
                     packing.OrderId,
                     OrderHistoryItemKind.StateChanged,
-                    "packing has started"),
+                    "packing"),
                 cancellationToken);
         }
         else

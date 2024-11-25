@@ -27,7 +27,7 @@ public class DeliveryStartedHandler : HandlerBase
                 new OrderHistoryData(
                     delivery.OrderId,
                     OrderHistoryItemKind.StateChanged,
-                    "delivery started"),
+                    "started delivering"),
                 cancellationToken);
         }
         else

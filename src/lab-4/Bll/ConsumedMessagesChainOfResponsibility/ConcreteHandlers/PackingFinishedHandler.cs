@@ -32,7 +32,7 @@ public class PackingFinishedHandler : HandlerBase
             }
             else
             {
-                orderHistoryMessage = "packing finished";
+                orderHistoryMessage = "order packed";
             }
 
             await _orderService.LogOrderHistory(

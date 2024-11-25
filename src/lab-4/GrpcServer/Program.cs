@@ -26,6 +26,7 @@ builder.Services
 
 builder.Services.AddHostedService<ConfigurationUpdateBackgroundService>();
 builder.Services.AddHostedService<MigrationBackgroundService>();
+builder.Services.AddBatchConsumerBackgroundService();
 
 WebApplication app = builder.Build();
 

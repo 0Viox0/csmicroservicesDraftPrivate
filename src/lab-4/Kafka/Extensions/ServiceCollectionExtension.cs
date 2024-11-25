@@ -39,6 +39,12 @@ public static class ServiceCollectionExtension
             IMessageConsumerChannelReader<TKey, TValue>,
             ConsumedMessageChannelReader<TKey, TValue>>();
 
+        return services;
+    }
+
+    public static IServiceCollection AddBatchConsumerBackgroundService<TKey, TValue>(
+        this IServiceCollection services)
+    {
         services.AddHostedService<BatchConsumerBackgroundService<TKey, TValue>>();
 
         return services;

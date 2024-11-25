@@ -132,7 +132,7 @@ public class OrdersController : ControllerBase
     /// <response code="200">Indicates that the order has been successfully transferred to processing.</response>
     /// <response code="404">If the order is not found.</response>
     /// <returns>Action result indicating the outcome of the operation.</returns>
-    [HttpPost("{orderId}/processing")]
+    [HttpPut("{orderId}/processing")]
     [ProducesResponseType(StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
     public async Task<IActionResult> TransferOrderToProcessing(
@@ -160,7 +160,7 @@ public class OrdersController : ControllerBase
     /// <response code="204">Indicates that the order has been successfully canceled.</response>
     /// <response code="404">If the order is not found.</response>
     /// <returns>Action result indicating the outcome of the operation.</returns>
-    [HttpPost("{orderId}/cancelation")]
+    [HttpPut("{orderId}/cancelation")]
     [ProducesResponseType(StatusCodes.Status204NoContent)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
     public async Task<IActionResult> CancelOrder(

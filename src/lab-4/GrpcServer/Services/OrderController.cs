@@ -68,15 +68,6 @@ public class OrderController : OrdersService.OrdersServiceBase
         return new TransferOrderToProcessingResponse();
     }
 
-    public override async Task<FulfillOrderResponse> FulfillOrder(
-        FulfillOrderRequest request,
-        ServerCallContext context)
-    {
-        await _orderService.FulfillOrder(request.OrderId, context.CancellationToken);
-
-        return new FulfillOrderResponse();
-    }
-
     public override async Task<CancelOrderResponse> CancelOrder(CancelOrderRequest request, ServerCallContext context)
     {
         await _orderService.CancelOrder(request.OrderId, context.CancellationToken);

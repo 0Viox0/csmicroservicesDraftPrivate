@@ -28,7 +28,7 @@ public class DeliveryFinishedHandler : HandlerBase
             if (!delivery.IsFinishedSuccessfully)
             {
                 await _orderService.CancelOrder(delivery.OrderId, cancellationToken);
-                orderHistoryMessage = $"order was canceled, reason: {delivery.FailureReason}";
+                orderHistoryMessage = $"Message: {delivery.FailureReason}. Order was canceled";
             }
             else
             {
@@ -42,7 +42,8 @@ public class DeliveryFinishedHandler : HandlerBase
                     orderHistoryMessage),
                 cancellationToken);
 
-            await _orderService.FulfillOrder(delivery.OrderId, cancellationToken);
+            if (delivery.IsFinishedSuccessfully)
+                await _orderService.FulfillOrder(delivery.OrderId, cancellationToken);
         }
         else
         {
